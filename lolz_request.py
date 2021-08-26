@@ -72,8 +72,7 @@ class LolzWorker():
         logger.info('token = %s' % self.xftoken)
 
     def parse_tags_id(self):
-        user_id = get_user_id()
-        url = "https://lolz.guru/market/user/tags?=&_xfRequestUri=/market/user/%s/orders&_xfNoRedirect=1&_xfToken=%s&_xfResponseType=json" % (user_id, self.xftoken)
+        url = "https://lolz.guru/market/user/tags?=&_xfRequestUri=/market/user/%s/orders&_xfNoRedirect=1&_xfToken=%s&_xfResponseType=json" % (self.user_id, self.xftoken)
 
         asd = get_url(url)
         answer = json.loads(asd.text)
