@@ -313,13 +313,15 @@ class LolzWorker():
                         "_xfResponseType": "json"
                     }
                     self.remove_tag(full_market_link, self.guarant_tag)
-                    logger.info("убрана метка гарантии с %s" % full_market_link)
+                    logger.info("На аккаунте %s убрана метка гарантии(она закончилась)" % full_market_link)
+                    self.send_message("Закончилась гарантия на %s, метка убрана" % full_market_link)
                         
                 if tags_div[0].text.lower() == "Невалид".lower():
                     if i == 0:
                         message += "\n\nНевалид аккакунты:\n"
                         i=1
                     message+="%s\n" % full_market_link
+                    logger.info("Убираю все теги с аккаунта %s(он невалид)" % full_market_link)
                     for div in tags_div[1:]:
                         tag_id = div.get("class")[1][3:]
                         data = {
@@ -331,37 +333,41 @@ class LolzWorker():
                         self.remove_tag(full_market_link, tag_id)
                     self.add_tag(full_market_link, self.arbitrage_tag)
 
-                    seller_nickname = divv.find("a", class_="username").text
-                    account_price = market_item.find("div", class_="marketIndexItem--Price").find("span", class_="Value").text
-                    data = {
-                        "as_responder": seller_nickname,
-                        "as_is_market_deal": 1,
-                        "as_market_item_link": full_market_link,
-                        "as_amount": account_price,
-                        "as_evidence": "res",
-                        "title": '',
-                        "message_html": "<p>res</p>",
-                        "_xfRelativeResolver": "https://lolz.guru/forums/239/create-thread?market_item_id=%s" % full_market_link.split("/")[-1],
-                        "tags": '',
-                        "watch_thread": 1,
-                        "watch_thread_state": 1,
-                        "poll[question]": '',
-                        "poll[responses][]": '',
-                        "poll[responses][]": '',
-                        "poll[max_votes_type]": "single",
-                        "poll[change_vote]": 1,
-                        "poll[view_results_unvoted]": 1,
-                        "_xfToken": self.xftoken,
-                        "_xfRequestUri": "/forums/239/create-thread?market_item_id=%s" % full_market_link.split("/")[-1],
-                        "_xfNoRedirect": 1,
-                        "_xfToken": self.xftoken,
-                        "_xfResponseType": "json",
-                    }
-                    asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
-                    print(json.loads(asd.text))
+                    if time_till_end_guarant>0:
+                        seller_nickname = divv.find("a", class_="username").text
+                        account_price = market_item.find("div", class_="marketIndexItem--Price").find("span", class_="Value").text
+                        data = {
+                            "as_responder": seller_nickname,
+                            "as_is_market_deal": 1,
+                            "as_market_item_link": full_market_link,
+                            "as_amount": account_price,
+                            "as_evidence": "res",
+                            "title": '',
+                            "message_html": "<p>res</p>",
+                            "_xfRelativeResolver": "https://lolz.guru/forums/239/create-thread?market_item_id=%s" % full_market_link.split("/")[-1],
+                            "tags": '',
+                            "watch_thread": 1,
+                            "watch_thread_state": 1,
+                            "poll[question]": '',
+                            "poll[responses][]": '',
+                            "poll[responses][]": '',
+                            "poll[max_votes_type]": "single",
+                            "poll[change_vote]": 1,
+                            "poll[view_results_unvoted]": 1,
+                            "_xfToken": self.xftoken,
+                            "_xfRequestUri": "/forums/239/create-thread?market_item_id=%s" % full_market_link.split("/")[-1],
+                            "_xfNoRedirect": 1,
+                            "_xfToken": self.xftoken,
+                            "_xfResponseType": "json",
+                        }
+                        asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
+                        print(json.loads(asd.text))
 
-                    logger.info("Написал арбитраж на акк - %s (таймаут минута)" % full_market_link)
-                    self.send_message("Написан арбитраж на %s" % (full_market_link))
+                        logger.info("Написал арбитраж на акк - %s (таймаут минута)" % full_market_link)
+                        self.send_message("Написан арбитраж на %s" % (full_market_link))
+                    else:
+                        logger.info("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
+                        self.send_message("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
                     time.sleep(60)
         
         return message 
