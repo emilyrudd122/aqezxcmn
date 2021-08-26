@@ -131,3 +131,5 @@ config.py
 test.py
 test.txt
 market.zip
+DS_Store
+.DS_Store

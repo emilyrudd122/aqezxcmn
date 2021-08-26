@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
+from datetime import datetime
 from logging import log
 from bs4 import BeautifulSoup
 from loguru import logger
@@ -30,7 +31,9 @@ class LolzWorker():
     def send_message(self, message):
         """ отправляет сообщение админу в тг с {message}"""
         try:
-            self.tb.send_message(config.telegram_id, message)
+            now = datetime.now()
+            t = now.strftime("%H:%M:%S")
+            self.tb.send_message(config.telegram_id, "[%s] %s" % (t, message))
         except:
             logger.error("сообщение в тг не отправлено")
 
@@ -455,7 +458,7 @@ class LolzWorker():
         self.parse_tags_id()
 
 
-        self.link = "https://lolz.guru/market/user/3764769/orders?order_by=pdate_to_down&tag_id[]=%s" % self.guarant_tag
+        self.link = "https://lolz.guru/market/user/%s/orders?order_by=pdate_to_down&tag_id[]=%s" % (self.user_id, self.guarant_tag)
         wqe = get_url(self.link)
         soup = BeautifulSoup(wqe.text, 'html.parser')
         try:
