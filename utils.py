@@ -13,17 +13,32 @@ def getXenforoCookie():
     base64DfId = eval(cookieArray)[-1]
     return base64.b64decode(base64DfId).decode()
 
+def make_coki():
+    cokies = config.cokies
+    asd = cokies.split(';')
+    ckies = {}
+    for qwe in asd:
+        qq = qwe.split("=")
+        if qq[0] == ' df_id':
+            ckies[qq[0]] = getXenforoCookie()
+            continue
+        ckies[qq[0]] = qq[1]
+
+    cookies = ckies
+
+    return cookies
+
 def get_url(url):
     """ returns page(requests object) """
 
     s = requests.Session()
-    cookies = config.cookies
+    # cookies = config.cookies
     # url = "https://lolz.guru/market/16461695/"
 
     # print(cookies)
     page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=cookies)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki())
     # print(page.cookies)
     return page
 
@@ -50,13 +65,13 @@ def get_post(url, data):
     """ returns page(requests object) """
 
     s = requests.Session()
-    cookies = config.cookies
+    # cookies = config.cookies
     # url = "https://lolz.guru/market/16461695/"
 
 
     page = s.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=cookies, data=data, timeout=100)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=100)
     return page
 
 def get_user_id():
