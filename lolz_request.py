@@ -19,6 +19,7 @@ logger.info("cкрипт запущен")
 class LolzWorker():
 
     def __init__(self):
+        self.startt = 0
         self.xftoken = ''
         self.guarant_tag = ''
         self.resell_tag = ''
@@ -213,22 +214,33 @@ class LolzWorker():
                         asd = get_post(second_link, data)
                         answer = json.loads(asd.text)
                         if answer['error'][0] != 'steam_captcha':
-                            logger.info("получилось выложить аккаунт после капчи")
-                            self.send_message("выложен акккаунт после капчи %s" % (market_link))
-                            flag = False
+                            if answer['_redirectStatus'] == 'ok':
+                                logger.success("получилось выложить аккаунт после капчи")
+                                self.send_message("выложен акккаунт после капчи %s" % (market_link))
+                                logger.info(answer)
+                                flag = False
+                            else:
+                                logger.info(answer)
                         i+=1
                     if i>7:
                         logger.error('не получилось выложить акк(капча стима при проверке)')
                         return
         except KeyError:
-            self.send_message("выложен акккаунт %s" % (market_link))
+            if answer['_redirectStatus'] == 'ok':
+                self.send_message("выложен акккаунт %s" % (market_link))
+                logger.info(answer)
+            else:
+                logger.info(answer)
+        if answer['_redirectStatus'] == 'ok':
+            self.remove_tag(market_link, self.guarant_tag) 
+            time.sleep(0.3)
+            self.remove_tag(market_link, self.resell_tag) 
+            time.sleep(0.3)
+            self.remove_tag(market_link, 13) 
+            self.parse_inventory(marketqq)
+        else:
+            logger.error("аккаунт не выложен %s " % (market_link))
             logger.info(answer)
-        self.remove_tag(market_link, self.guarant_tag) 
-        time.sleep(0.3)
-        self.remove_tag(market_link, self.resell_tag) 
-        time.sleep(0.3)
-        self.remove_tag(market_link, 13) 
-        self.parse_inventory(marketqq)
         logger.info("конец resell")
         # time.sleep(20)
 
@@ -362,10 +374,10 @@ class LolzWorker():
                         asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
                         print(json.loads(asd.text))
 
-                        logger.info("Написал арбитраж на акк - %s (таймаут минута)" % full_market_link)
+                        logger.success("Написал арбитраж на акк - %s (таймаут минута)" % full_market_link)
                         self.send_message("Написан арбитраж на %s" % (full_market_link))
                     else:
-                        logger.info("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
+                        logger.error("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
                         self.send_message("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
                     time.sleep(60)
         
@@ -398,7 +410,7 @@ class LolzWorker():
                     self.send_message("(guardcheck)Капча стима, не могу чекнуть акк на валид %s" % link)
                     logger.error("не могу чекнуть акк, нужна капча, пишите NealCaffrey")
                 except wa.TwoFactorCodeRequired:
-                    logger.info("валид аккаунт %s" % link)
+                    logger.success("(guardcheck) валид аккаунт %s" % link)
                 
                 return
                     
@@ -440,12 +452,12 @@ class LolzWorker():
                         qwe = get_post(link_for_check, data) 
                         answer = json.loads(qwe.text)
                         if answer['error'][0] != 'steam_captcha':
-                            logger.info('получилось проверить на валид после капчи')
+                            logger.success('получилось проверить на валид после капчи')
                             flag = False
                             return 1
                         i+=1
                     if i>7:
-                        logger.info('не получилось проверить на валид, иду дальше')
+                        logger.error('не получилось проверить на валид, иду дальше')
                         return 0
         except KeyError:
             print(answer)
@@ -461,7 +473,6 @@ class LolzWorker():
         # Здесь начинается парсинг аккаунтов по указанной ссылке
         self.parse_xftoken()
         self.parse_tags_id()
-
 
         self.link = "https://lolz.guru/market/user/%s/orders?order_by=pdate_to_down&tag_id[]=%s" % (self.user_id, self.guarant_tag)
         wqe = get_url(self.link)
