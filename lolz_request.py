@@ -25,6 +25,7 @@ class LolzWorker():
         self.resell_tag = ''
         self.arbitrage_tag = ''
         self.guard_tag = ''
+        self.bot_sold_tag = ''
         self.tb = telebot.TeleBot(config.token)
         self.link = "" 
         self.user_id = get_user_id()
@@ -98,9 +99,13 @@ class LolzWorker():
             if config.guard_tag.lower() == tag_name.lower():
                 self.guard_tag = tag_id
                 i+=1
+            if config.bot_sold_tag.lower() == tag_name.lower():
+                self.bot_sold_tag = tag_id
+                i+=1
+            
             
 
-        if i != 4:
+        if i != 5:
             logger.error("не все теги были спаршены, проверьте правильно ли вы все создали+указали")
             exit()
 
@@ -193,7 +198,7 @@ class LolzWorker():
         second_link = "https://lolz.guru/market/%d/goods/check" % int(marketqq)
         asd = get_post(second_link, data)
         answer = json.loads(asd.text)
-        logger.info(answer)
+        # logger.info(answer)
 
         try:
             if answer['error']:
@@ -228,7 +233,7 @@ class LolzWorker():
         except KeyError:
             if answer['_redirectStatus'] == 'ok':
                 self.send_message("выложен акккаунт %s" % (market_link))
-                logger.info(answer)
+                logger.success(answer)
             else:
                 logger.info(answer)
         if answer['_redirectStatus'] == 'ok':
@@ -237,6 +242,7 @@ class LolzWorker():
             self.remove_tag(market_link, self.resell_tag) 
             time.sleep(0.3)
             self.remove_tag(market_link, 13) 
+            self.add_tag(market_link, self.bot_sold_tag)
             self.parse_inventory(marketqq)
         else:
             logger.error("аккаунт не выложен %s " % (market_link))
@@ -372,7 +378,7 @@ class LolzWorker():
                             "_xfResponseType": "json",
                         }
                         asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
-                        print(json.loads(asd.text))
+                        logger.info(json.loads(asd.text))
 
                         logger.success("Написал арбитраж на акк - %s (таймаут минута)" % full_market_link)
                         self.send_message("Написан арбитраж на %s" % (full_market_link))
@@ -460,7 +466,7 @@ class LolzWorker():
                         logger.error('не получилось проверить на валид, иду дальше')
                         return 0
         except KeyError:
-            print(answer)
+            logger.info(answer)
             return 1
     
     def error(self):
@@ -539,7 +545,7 @@ class LolzWorker():
             logger.info("отправлено сообщение в телеграм")
             logger.info("скрипт завершен")
         else:
-            print("msg == ''")
+            logger.info("msg == ''")
             logger.info("скрипт завершен")
 
 doit = LolzWorker()
