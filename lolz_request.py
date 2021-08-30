@@ -250,31 +250,64 @@ class LolzWorker():
         logger.info("конец resell")
         # time.sleep(20)
 
+    def check_red_table(self, link):
+        """takes market link 
+        return True if kt
+        return False if no kt"""
+        page = get_url(link)
+
+        soup = BeautifulSoup(page.text, 'html.parser')
+
+        try:
+            steam_link = soup.find("a", class_="accountLinkButton").get("href")
+
+            steam_page = get_url(steam_link)
+
+            soup = BeautifulSoup(steam_page.text, 'html.parser')
+
+            private_profile = soup.find("div", class_="private_profile")
+
+            if private_profile:
+                return True
+            return False
+        except:
+            logger.error("ошибка! Что - то не получилось спарсить при проверке на кт")
+
     def resell_accounts(self) -> None:
         """перепродает акки с меткой перепродать, без метки гарантии"""
         link_for_resell_accounts = "https://lolz.guru/market/user/%s/orders?order_by=pdate_to_down&tag_id[]= %s" % (self.user_id, self.resell_tag)
         qwe = get_url(link_for_resell_accounts)
 
         soup = BeautifulSoup(qwe.text, 'html.parser')
+        try:
+            last_page = int(soup.find('div', class_="PageNav").get("data-last"))
+        except AttributeError:
+            last_page = 1
 
-        market_items = soup.find_all("div", class_="marketIndexItem")
-        accs_for_resell = []
-        for market_item in market_items:
-            market_link = market_item.find("a", class_="marketIndexItem--Title").get('href')
-            full_market_link = "https://lolz.guru/" + market_link
-            divv = market_item.find("div", class_="marketIndexItem--otherInfo")
-            tags_div = divv.find("div", class_="itemTags").find_all("span", class_="tag")[:-1]
-            flag = False
-            if tags_div[0].text.lower() == 'невалид':
-                logger.info("акк невалид, не могу перепродать %s " % full_market_link)
-                self.send_message('этот аккаунт не валид. не могу его перепродать %s ' % (full_market_link))
-                return
-            for tag in tags_div:
-                if tag.text.lower() == config.guarant_tag.lower():
-                    flag = True
-            
-            if not flag:
-                accs_for_resell.append(full_market_link)
+        for i in range(1, last_page+1):
+            linkk = link_for_resell_accounts + "&page=%d" % i
+            logger.info("парсирую аккаунты")
+            qwe = get_url(linkk)
+            soup = BeautifulSoup(qwe.text, 'html.parser')
+
+            market_items = soup.find_all("div", class_="marketIndexItem")
+            accs_for_resell = []
+            for market_item in market_items:
+                market_link = market_item.find("a", class_="marketIndexItem--Title").get('href')
+                full_market_link = "https://lolz.guru/" + market_link
+                divv = market_item.find("div", class_="marketIndexItem--otherInfo")
+                tags_div = divv.find("div", class_="itemTags").find_all("span", class_="tag")[:-1]
+                flag = False
+                if tags_div[0].text.lower() == 'невалид':
+                    logger.info("акк невалид, не могу перепродать %s " % full_market_link)
+                    self.send_message('этот аккаунт не валид. не могу его перепродать %s ' % (full_market_link))
+                    return
+                for tag in tags_div:
+                    if tag.text.lower() == config.guarant_tag.lower():
+                        flag = True
+                
+                if not flag:
+                    accs_for_resell.append(full_market_link)
         
         for acc in accs_for_resell:
             asd = self.check_valid(acc)
@@ -290,8 +323,45 @@ class LolzWorker():
         
 
 
+    def make_arb_account(self, market_link):
+        market_page = get_url(market_link)
+        soup = BeautifulSoup(market_page.text, 'html.parser')
+
+        seller_nickname = soup.find_all("a", class_="username")[1].text
+        account_price = soup.find("span", class_="price").text.split()[0]
+
+        # print(account_price)
+        # print(seller_nickname)
 
 
+        data = {
+            "as_responder": seller_nickname,
+            "as_is_market_deal": 1,
+            "as_market_item_link": market_link,
+            "as_amount": account_price,
+            "as_evidence": "res",
+            "title": '',
+            "message_html": "<p>res</p>",
+            "_xfRelativeResolver": "https://lolz.guru/forums/239/create-thread?market_item_id=%s" % market_link.split("/")[-1],
+            "tags": '',
+            "watch_thread": 1,
+            "watch_thread_state": 1,
+            "poll[question]": '',
+            "poll[responses][]": '',
+            "poll[responses][]": '',
+            "poll[max_votes_type]": "single",
+            "poll[change_vote]": 1,
+            "poll[view_results_unvoted]": 1,
+            "_xfToken": self.xftoken,
+            "_xfRequestUri": "/forums/239/create-thread?market_item_id=%s" % market_link.split("/")[-1],
+            "_xfNoRedirect": 1,
+            "_xfToken": self.xftoken,
+            "_xfResponseType": "json",
+        }
+
+        asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
+        logger.success("Написал арбитраж на акк - %s (таймаут минута)" % market_link)
+        self.send_message("Написан арбитраж на %s" % (market_link))
 
 
     def get_account_marks(self, message='123'):
@@ -351,47 +421,21 @@ class LolzWorker():
                     self.add_tag(full_market_link, self.arbitrage_tag)
 
                     if time_till_end_guarant>0:
-                        seller_nickname = divv.find("a", class_="username").text
-                        account_price = market_item.find("div", class_="marketIndexItem--Price").find("span", class_="Value").text
-                        data = {
-                            "as_responder": seller_nickname,
-                            "as_is_market_deal": 1,
-                            "as_market_item_link": full_market_link,
-                            "as_amount": account_price,
-                            "as_evidence": "res",
-                            "title": '',
-                            "message_html": "<p>res</p>",
-                            "_xfRelativeResolver": "https://lolz.guru/forums/239/create-thread?market_item_id=%s" % full_market_link.split("/")[-1],
-                            "tags": '',
-                            "watch_thread": 1,
-                            "watch_thread_state": 1,
-                            "poll[question]": '',
-                            "poll[responses][]": '',
-                            "poll[responses][]": '',
-                            "poll[max_votes_type]": "single",
-                            "poll[change_vote]": 1,
-                            "poll[view_results_unvoted]": 1,
-                            "_xfToken": self.xftoken,
-                            "_xfRequestUri": "/forums/239/create-thread?market_item_id=%s" % full_market_link.split("/")[-1],
-                            "_xfNoRedirect": 1,
-                            "_xfToken": self.xftoken,
-                            "_xfResponseType": "json",
-                        }
-                        asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
-                        logger.info(json.loads(asd.text))
-
-                        logger.success("Написал арбитраж на акк - %s (таймаут минута)" % full_market_link)
-                        self.send_message("Написан арбитраж на %s" % (full_market_link))
+                        self.make_arb_account(full_market_link)
+                        time.sleep(60)
                     else:
-                        logger.error("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
-                        self.send_message("Арбитраж на аккаунт %s не написан, так как закончилась гарантия, нужно проверить аккаунт в ручную")
-                    time.sleep(60)
+                        logger.error("гарантия на аккаунт кончилась, не пишу арб, надо чекнуть ак вручную %s" % full_market_link)
         
         return message 
 
     def check_valid(self, link):
         """принимает линк в формате https://lolz.guru/market/17946602/"""
         
+        kt = self.check_red_table(link)
+        if kt:
+            logger.error("ошибка при проверке аккаунта, на нем кт %s" % link)
+            self.send_message("ошибка при проверке аккаунта, на нем кт %s" % link)
+            return 3
         page = get_url(link)
         soup = BeautifulSoup(page.text, 'html.parser')
 
@@ -459,6 +503,10 @@ class LolzWorker():
                         answer = json.loads(qwe.text)
                         if answer['error'][0] != 'steam_captcha':
                             logger.success('получилось проверить на валид после капчи')
+                            if kt:
+                                logger.error("ошибка при проверке аккаунта, на нем кт")
+                                self.send_message("ошибка при проверке аккаунта, на нем кт")
+                                return
                             flag = False
                             return 1
                         i+=1
@@ -466,7 +514,7 @@ class LolzWorker():
                         logger.error('не получилось проверить на валид, иду дальше')
                         return 0
         except KeyError:
-            logger.info(answer)
+            logger.success(answer)
             return 1
     
     def error(self):
@@ -479,6 +527,7 @@ class LolzWorker():
         # Здесь начинается парсинг аккаунтов по указанной ссылке
         self.parse_xftoken()
         self.parse_tags_id()
+
 
         self.link = "https://lolz.guru/market/user/%s/orders?order_by=pdate_to_down&tag_id[]=%s" % (self.user_id, self.guarant_tag)
         wqe = get_url(self.link)
@@ -541,7 +590,8 @@ class LolzWorker():
         msg = self.get_account_marks(message)
         self.resell_accounts()
         if msg != "":
-            self.send_message(msg)
+            # self.send_message(msg)
+            logger.info(msg)
             logger.info("отправлено сообщение в телеграм")
             logger.info("скрипт завершен")
         else:
@@ -557,6 +607,7 @@ while True:
         time.sleep(config.restart_script_interval)
     except:
         logger.error("скрипт крашнулся, жду 20 сек и перезапускаю")
+        doit.send_message("crash")
         i+=1
         if i > 5:
             doit.error()
