@@ -221,7 +221,7 @@ class LolzWorker():
                         if answer['error'][0] != 'steam_captcha':
                             if answer['_redirectStatus'] == 'ok':
                                 logger.success("получилось выложить аккаунт после капчи")
-                                self.send_message("выложен акккаунт после капчи %s" % (market_link))
+                                self.send_message("выложен акккаунт после капчи %s" % (answer['_redirectTarget']))
                                 logger.info(answer)
                                 flag = False
                             else:
@@ -232,7 +232,7 @@ class LolzWorker():
                         return
         except KeyError:
             if answer['_redirectStatus'] == 'ok':
-                self.send_message("выложен акккаунт %s" % (market_link))
+                self.send_message("выложен акккаунт %s" % (answer['_redirectTarget']))
                 logger.success(answer)
             else:
                 logger.info(answer)
@@ -244,9 +244,17 @@ class LolzWorker():
             self.remove_tag(market_link, 13) 
             self.add_tag(market_link, self.bot_sold_tag)
             self.parse_inventory(marketqq)
+
+            logger.info(answer)
+
+
+            new_acc_link = answer['_redirectTarget']
+            
         else:
             logger.error("аккаунт не выложен %s " % (market_link))
             logger.info(answer)
+        
+
         logger.info("конец resell")
         # time.sleep(20)
 
@@ -385,6 +393,7 @@ class LolzWorker():
             market_items = soupp.find_all('div', class_="marketIndexItem")
             
             i = 0
+            nevalid_accs = []
             for market_item in market_items:
                 market_link = market_item.find("a", class_="marketIndexItem--Title").get('href')
                 full_market_link = "https://lolz.guru/" + market_link
@@ -411,21 +420,22 @@ class LolzWorker():
                     logger.info("Убираю все теги с аккаунта %s(он невалид)" % full_market_link)
                     for div in tags_div[1:]:
                         tag_id = div.get("class")[1][3:]
-                        data = {
-                            "_xfRequestUri": "/market/user/3764769/orders",
-                            "_xfNoRedirect": "1",
-                            "_xfToken": self.xftoken,
-                            "_xfResponseType": "json"
-                        }
                         self.remove_tag(full_market_link, tag_id)
                     self.add_tag(full_market_link, self.arbitrage_tag)
 
                     if time_till_end_guarant>0:
-                        self.make_arb_account(full_market_link)
-                        time.sleep(60)
+                        nevalid_accs.append(full_market_link)
                     else:
                         logger.error("гарантия на аккаунт кончилась, не пишу арб, надо чекнуть ак вручную %s" % full_market_link)
         
+        if len(nevalid_accs) == 1:
+            self.make_arb_account(nevalid_accs[0])
+        else:
+            for acc in nevalid_accs:
+                self.make_arb_account(acc)
+                time.sleep(61)
+
+
         return message 
 
     def check_valid(self, link):
