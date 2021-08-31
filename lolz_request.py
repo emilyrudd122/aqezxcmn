@@ -150,6 +150,23 @@ class LolzWorker():
         page = get_url(market_link)
         soup = BeautifulSoup(page.text, 'html.parser')
 
+        def get_account_name(soup) -> str:
+            """takes soup and returns account name"""
+
+            name = soup.find("h1", class_="marketItemView--titleStyle").text.split()
+
+            nnn = ''
+            for xd in name:
+
+                if xd == 'Валидный':
+                    break 
+
+                nnn += xd + ' '
+
+
+            return nnn
+        
+        account_name = get_account_name(soup)
         login = soup.find("span", id="loginData--login").text
         password = soup.find("span", id="loginData--password").text
 
@@ -157,7 +174,7 @@ class LolzWorker():
 
         data = {
             "category_id": "1",
-            "title": "%s" % nazvanie,
+            "title": "%s" % account_name,
             "title_en": "check",
             "auto_translate": "1",
             "price": "%s" % price,
@@ -249,7 +266,7 @@ class LolzWorker():
 
 
             new_acc_link = answer['_redirectTarget']
-            
+
         else:
             logger.error("аккаунт не выложен %s " % (market_link))
             logger.info(answer)
@@ -383,6 +400,7 @@ class LolzWorker():
             last_page = 1
         market_items = soup.find_all("div", class_="marketIndexItem")
 
+        nevalid_accs = []
 
         for i in range(1, last_page+1):
             linkk = self.link + "&page=%d" % i
@@ -393,7 +411,6 @@ class LolzWorker():
             market_items = soupp.find_all('div', class_="marketIndexItem")
             
             i = 0
-            nevalid_accs = []
             for market_item in market_items:
                 market_link = market_item.find("a", class_="marketIndexItem--Title").get('href')
                 full_market_link = "https://lolz.guru/" + market_link
@@ -402,12 +419,6 @@ class LolzWorker():
 
                 time_till_end_guarant = self.get_time_till_guarantee(market_item)
                 if time_till_end_guarant < 0:
-                    data = {
-                        "_xfRequestUri": "/market/user/3764769/orders",
-                        "_xfNoRedirect": "1",
-                        "_xfToken": self.xftoken,
-                        "_xfResponseType": "json"
-                    }
                     self.remove_tag(full_market_link, self.guarant_tag)
                     logger.info("На аккаунте %s убрана метка гарантии(она закончилась)" % full_market_link)
                     self.send_message("Закончилась гарантия на %s, метка убрана" % full_market_link)
