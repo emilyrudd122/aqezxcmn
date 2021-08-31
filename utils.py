@@ -3,6 +3,7 @@ import base64
 import re
 from bs4 import BeautifulSoup
 import config
+import sqlite3
 
 
 
@@ -85,3 +86,21 @@ def get_user_id():
     user_id = url_id.get("href").split("/")[2]
     
     return user_id
+
+conn = sqlite3.connect('market.db')
+cursor = conn.cursor()
+
+asd = """CREATE TABLE "accounts" (
+	"id"	INTEGER,
+	"link"	TEXT,
+	"buy_price"	INTEGER,
+	"sell_price"	INTEGER,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);"""
+try:
+    qwe = cursor.execute(asd)
+    conn.commit()
+    print('table created')
+except sqlite3.OperationalError:
+    print('table existst')
+    pass

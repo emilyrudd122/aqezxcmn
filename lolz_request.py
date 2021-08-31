@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
+import sqlite3
 from datetime import datetime
 from logging import log
 from bs4 import BeautifulSoup
@@ -9,7 +10,7 @@ import telebot
 import config
 import steam.webauth as wa
 import time
-from utils import get_url, get_post, display_time, get_user_id
+from utils import get_url, get_post, display_time, get_user_id, conn, cursor
 
 logger.add("logs/file_{time}.log", rotation="5 MB")
 
@@ -150,6 +151,8 @@ class LolzWorker():
         page = get_url(market_link)
         soup = BeautifulSoup(page.text, 'html.parser')
 
+        account_price = soup.find("span", class_="price").text.split()[0]
+
         def get_account_name(soup) -> str:
             """takes soup and returns account name"""
 
@@ -271,6 +274,14 @@ class LolzWorker():
             logger.error("аккаунт не выложен %s " % (market_link))
             logger.info(answer)
         
+        sql = "insert into accounts(link, buy_price) values (?, ?)"
+        data = (market_link, new_acc_link)
+        try:
+            cursor.execute(sql, data)
+            conn.commit()
+
+        except sqlite3.Error as error:
+            print("Failed to insert Python variable into sqlite table", error)
 
         logger.info("конец resell")
         # time.sleep(20)
