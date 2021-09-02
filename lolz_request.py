@@ -151,6 +151,20 @@ class LolzWorker():
         page = get_url(market_link)
         soup = BeautifulSoup(page.text, 'html.parser')
 
+        try:
+            login = soup.find("span", id="loginData--login").text
+            password = soup.find("span", id="loginData--password").text
+        except AttributeError:
+            link = f'https://lolz.guru/market/{market_id}/change-password?_cancel=1&=&_xfRequestUri=/market/{market_id}/&_xfNoRedirect=1&_xfToken={self.xftoken}&_xfResponseType=json'
+
+            asd = get_url(link)
+
+            logger.info(json.loads(asd.text))
+            page = get_url(market_link)
+            soup = BeautifulSoup(page.text, 'html.parser')
+            login = soup.find("span", id="loginData--login").text
+            password = soup.find("span", id="loginData--password").text
+
         account_price = soup.find("span", class_="price").text.split()[0]
 
         def get_account_name(soup) -> str:
@@ -170,8 +184,9 @@ class LolzWorker():
             return nnn
         
         account_name = get_account_name(soup)
-        login = soup.find("span", id="loginData--login").text
-        password = soup.find("span", id="loginData--password").text
+
+
+
 
         resell_t = soup.find("a", class_="resellButton").get("href").split("=")[1]
 
@@ -275,7 +290,7 @@ class LolzWorker():
             logger.info(answer)
         
         sql = "insert into accounts(link, buy_price) values (?, ?)"
-        data = (market_link, new_acc_link)
+        data = (market_link, account_price)
         try:
             cursor.execute(sql, data)
             conn.commit()
