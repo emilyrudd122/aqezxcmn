@@ -20,10 +20,10 @@ def make_coki():
     ckies = {}
     for qwe in asd:
         qq = qwe.split("=")
-        if qq[0] == ' df_id':
-            ckies[qq[0]] = getXenforoCookie()
+        if qq[0].split()[0] == 'df_id':
+            ckies[qq[0].split()[0]] = getXenforoCookie()
             continue
-        ckies[qq[0]] = qq[1]
+        ckies[qq[0].split()[0]] = qq[1]
 
     cookies = ckies
 

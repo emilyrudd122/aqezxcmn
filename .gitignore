@@ -135,3 +135,6 @@ DS_Store
 .DS_Store
 env_test/
 steam_guard.py
+accs.py
+cccs.txt
+db.py

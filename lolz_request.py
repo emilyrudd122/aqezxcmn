@@ -185,9 +185,6 @@ class LolzWorker():
         
         account_name = get_account_name(soup)
 
-
-
-
         resell_t = soup.find("a", class_="resellButton").get("href").split("=")[1]
 
         data = {
@@ -319,7 +316,9 @@ class LolzWorker():
             private_profile = soup.find("div", class_="private_profile")
 
             if private_profile:
+                # TODO: здесь должен писать арб на кт
                 return True
+
             return False
         except:
             logger.error("ошибка! Что - то не получилось спарсить при проверке на кт")
@@ -367,7 +366,7 @@ class LolzWorker():
             elif asd == 2:
                 logger.info("акк валид можно перепродавать %s" % acc)
             else:
-                return
+                continue 
             
             market_id = acc.split('/')[-2]
             self.resell_account(market_id, 'resell by bot', '9999')
@@ -617,11 +616,13 @@ class LolzWorker():
         accounts.sort(key=takeSecond)
 
         message = ""
+        i = 1
         for acc in accounts:
             if acc[1] == 0:
-                message = message + "\n%s %s" % (acc[0], "гарантия закончилась")
+                message = str(i) + ") " + message + "\n%d) %s %s" % (i, acc[0], "гарантия закончилась")
                 continue
-            message = message + "\n%s %s" % (acc[0], display_time(acc[1]))
+            message = message + "\n%d) %s %s" % (i, acc[0], display_time(acc[1]))
+            i+=1
 
         logger.info("- - - - начинаю проверку аккаунтов на валид")
         for acc in accounts:
