@@ -112,7 +112,11 @@ class LolzWorker():
 
 
     def get_time_till_guarantee(self, market_item):
-        vremya_pokupki_accounta = market_item.find("div", class_="marketIndexItem--otherInfo").find("abbr", class_="DateTime").get("data-time")
+        try:
+            vremya_pokupki_accounta = market_item.find("div", class_="marketIndexItem--otherInfo").find("abbr", class_="DateTime").get("data-time")
+        except AttributeError:
+            print("не могу спарсить время до конца гарантии")
+            return 0
         guarantee_time = market_item.find("span", class_="smallGuarantee")
         if guarantee_time == None:
 
@@ -150,6 +154,82 @@ class LolzWorker():
         market_link = "https://lolz.guru/market/%d/" % market_id
         page = get_url(market_link)
         soup = BeautifulSoup(page.text, 'html.parser')
+        def create_account_name(soup):
+            def parse_games(soup):
+                game_names = []
+                # print(soup.text)
+                games = soup.find("div", class_="marketItemView--gamesContainer").find("ul")
+                
+
+                for game in games.find_all('li'):
+                    qwe = game.find("div", class_="gameTitle").text.split()
+                    game_name = ' '.join([asd for asd in qwe])
+                    
+                    popular_games = ['CS:GO + Prime', 'PUBG', 'Rust']
+                    if game_name in popular_games:
+                        qq = game.find("div", class_="gameHoursPlayed").text.split()
+                        game_hours = ' '.join([asd for asd in qq])
+                        game_names.append([game_name, game_hours.replace(' ч.', 'h')])
+                # print(game_names)
+                return game_names
+
+            games = parse_games(soup)
+            def parse_full_inventory(soup):
+                full_inv = 0
+                try:
+                    inventory = soup.find_all("div", class_="marketItemView--counters")[0]
+                    counters = inventory.find_all("div", class_="counter")
+                    for counter in counters:
+                        inv = counter.find("div", class_="label").text.split('руб.')[0]
+                        inv_cost = ''.join([qwe for qwe in inv.split()])
+                        full_inv += int(inv_cost)
+                    return full_inv
+                except:
+                    print("что то пошло не так при парсе инвентаря")
+                    return 0
+            inv_cost = parse_full_inventory(soup)
+            nam = ""
+            for game in games:
+                if 'CS:GO + Prime' in game[0]:
+                    def check_medals(soup):
+                        medals_div = soup.find("div", class_="steamCsgoMedals")
+                        if medals_div:
+                            medals_num = len(soup.find_all("div", class_="medal"))
+                            return medals_num
+                        else:
+                            return 0
+                    
+                    medals = check_medals(soup)
+                    # print('medaley - ' + str(medals))
+                    nam += f"Prime({game[1]}, {str(medals)+' medals' if medals>0 else ''}) "
+                
+                if 'PUBG' in game[0]:
+                    nam += f"Pubg ({game[1]}) "
+                if 'Rust' in game[0]:
+                    nam += f"Rust ({game[1]}) "
+
+            nazvanie = f"{nam} | Inv {inv_cost} руб. | Inactive"
+
+            return nazvanie
+        try:
+            account_name = create_account_name(soup)
+        except:
+            def get_account_name(soup) -> str:
+                """takes soup and returns account name"""
+
+                name = soup.find("h1", class_="marketItemView--titleStyle").text.split()
+
+                nnn = ''
+                for xd in name:
+
+                    if xd == 'Валидный':
+                        break 
+
+                    nnn += xd + ' '
+
+
+                return nnn
+            account_name = get_account_name(soup)
 
         try:
             login = soup.find("span", id="loginData--login").text
@@ -167,23 +247,9 @@ class LolzWorker():
 
         account_price = soup.find("span", class_="price").text.split()[0]
 
-        def get_account_name(soup) -> str:
-            """takes soup and returns account name"""
-
-            name = soup.find("h1", class_="marketItemView--titleStyle").text.split()
-
-            nnn = ''
-            for xd in name:
-
-                if xd == 'Валидный':
-                    break 
-
-                nnn += xd + ' '
-
-
-            return nnn
         
-        account_name = get_account_name(soup)
+        
+        
 
         resell_t = soup.find("a", class_="resellButton").get("href").split("=")[1]
 
@@ -316,7 +382,6 @@ class LolzWorker():
             private_profile = soup.find("div", class_="private_profile")
 
             if private_profile:
-                # TODO: здесь должен писать арб на кт
                 return True
 
             return False
@@ -373,7 +438,7 @@ class LolzWorker():
         
 
 
-    def make_arb_account(self, market_link):
+    def make_arb_account(self, market_link, kt=False):
         market_page = get_url(market_link)
         soup = BeautifulSoup(market_page.text, 'html.parser')
 
@@ -382,16 +447,16 @@ class LolzWorker():
 
         # print(account_price)
         # print(seller_nickname)
-
+        arb_text = 'res' if not kt else 'kt'
 
         data = {
             "as_responder": seller_nickname,
             "as_is_market_deal": 1,
             "as_market_item_link": market_link,
             "as_amount": account_price,
-            "as_evidence": "res",
+            "as_evidence": arb_text,
             "title": '',
-            "message_html": "<p>res</p>",
+            "message_html": f"<p>{arb_text}</p>",
             "_xfRelativeResolver": "https://lolz.guru/forums/239/create-thread?market_item_id=%s" % market_link.split("/")[-1],
             "tags": '',
             "watch_thread": 1,
@@ -481,6 +546,10 @@ class LolzWorker():
         if kt:
             logger.error("ошибка при проверке аккаунта, на нем кт %s" % link)
             self.send_message("ошибка при проверке аккаунта, на нем кт %s" % link)
+            self.make_arb_account(link, kt=True)
+            self.remove_tag(link, self.guarant_tag)
+            self.remove_tag(link, self.resell_tag)
+            self.add_tag(link, self.arbitrage_tag)
             return 3
         page = get_url(link)
         soup = BeautifulSoup(page.text, 'html.parser')
@@ -600,7 +669,7 @@ class LolzWorker():
                 full_market_link = "https://lolz.guru/" + market_link
 
                 ostalos_vremeni_dokonca = self.get_time_till_guarantee(market_item)
-                if ostalos_vremeni_dokonca < 0:
+                if ostalos_vremeni_dokonca <= 0:
                     # TODO: если гарантия закончилась, сделать проверку на то был ли акк валид(через страницу history) или о нем не было инфы
                     accounts.append((full_market_link, 0))
                 else:
@@ -619,7 +688,7 @@ class LolzWorker():
         i = 1
         for acc in accounts:
             if acc[1] == 0:
-                message = str(i) + ") " + message + "\n%d) %s %s" % (i, acc[0], "гарантия закончилась")
+                message = str(i) + ") " + message + "\n%d) %s %s" % (i, acc[0], "гарантия закончилась, или не могу её спарсить")
                 continue
             message = message + "\n%d) %s %s" % (i, acc[0], display_time(acc[1]))
             i+=1
