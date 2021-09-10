@@ -169,7 +169,7 @@ class LolzWorker():
                     if game_name in popular_games:
                         qq = game.find("div", class_="gameHoursPlayed").text.split()
                         game_hours = ' '.join([asd for asd in qq])
-                        game_names.append([game_name, game_hours.replace(' ч.', 'h')])
+                        game_names.append([game_name, game_hours.replace(' ч.', ' hour')])
                 # print(game_names)
                 return game_names
 
@@ -201,14 +201,14 @@ class LolzWorker():
                     
                     medals = check_medals(soup)
                     # print('medaley - ' + str(medals))
-                    nam += f"Prime({game[1]}, {str(medals)+' medals' if medals>0 else ''}) "
+                    nam += f"Prime({game[1]} {str(medals)+' medals' if medals>0 else ''}) "
                 
                 if 'PUBG' in game[0]:
                     nam += f"Pubg ({game[1]}) "
                 if 'Rust' in game[0]:
                     nam += f"Rust ({game[1]}) "
-
-            nazvanie = f"{nam} | Inv {inv_cost} руб. | Inactive"
+            inv_txt = "Inv " + str(inv_cost) + " руб. |"
+            nazvanie = f"{nam} | {inv_txt if int(inv_cost) > 200 else ''} Inactive"
 
             return nazvanie
         try:
@@ -256,7 +256,7 @@ class LolzWorker():
         data = {
             "category_id": "1",
             "title": "%s" % account_name,
-            "title_en": "check",
+            "title_en": "%s" % account_name,
             "auto_translate": "1",
             "price": "%s" % price,
             "allow_ask_discount": "on",
