@@ -10,7 +10,10 @@ import telebot
 import config
 import steam.webauth as wa
 import time
-from utils import get_url, get_post, display_time, get_user_id, conn, cursor
+from utils import get_url, get_post, display_time, get_user_id
+import db
+from bot import bot_run
+from threading import Thread
 
 logger.add("logs/file_{time}.log", rotation="5 MB")
 
@@ -174,6 +177,8 @@ class LolzWorker():
                 return game_names
 
             games = parse_games(soup)
+            if len(games) == 0:
+                return 'NoLimit | Inactive'
             def parse_full_inventory(soup):
                 full_inv = 0
                 try:
@@ -231,6 +236,17 @@ class LolzWorker():
                 return nnn
             account_name = get_account_name(soup)
 
+        def get_price(link):
+            links = db.cursor.execute("select * from resell_price").fetchall()
+
+            for ll in links:
+                if ll['link'] == link:
+                    return ll['price']
+                else:
+                    return 9999
+        
+        
+
         try:
             login = soup.find("span", id="loginData--login").text
             password = soup.find("span", id="loginData--password").text
@@ -247,18 +263,16 @@ class LolzWorker():
 
         account_price = soup.find("span", class_="price").text.split()[0]
 
-        
-        
-        
-
         resell_t = soup.find("a", class_="resellButton").get("href").split("=")[1]
+
+        sell_price = get_price(market_link)
 
         data = {
             "category_id": "1",
             "title": "%s" % account_name,
             "title_en": "%s" % account_name,
             "auto_translate": "1",
-            "price": "%s" % price,
+            "price": "%s" % sell_price,
             "allow_ask_discount": "on",
             "extended_guarantee": "0",
             "description_html": "<p><br></p>",
@@ -355,8 +369,8 @@ class LolzWorker():
         sql = "insert into accounts(link, buy_price) values (?, ?)"
         data = (market_link, account_price)
         try:
-            cursor.execute(sql, data)
-            conn.commit()
+            db.cursor.execute(sql, data)
+            db.conn.commit()
 
         except sqlite3.Error as error:
             print("Failed to insert Python variable into sqlite table", error)
@@ -717,17 +731,21 @@ class LolzWorker():
 
 doit = LolzWorker()
 i = 0
-while True:
-    try:
-        doit.main()
-        logger.info("Перезапуск через %s секунд" % config.restart_script_interval)
-        time.sleep(config.restart_script_interval)
-    except:
-        logger.error("скрипт крашнулся, жду 20 сек и перезапускаю")
-        doit.send_message("crash")
-        i+=1
-        if i > 5:
-            doit.error()
-            i = 0
-        time.sleep(20)
-        continue
+def run():
+    while True:
+        try:
+            doit.main()
+            logger.info("Перезапуск через %s секунд" % config.restart_script_interval)
+            time.sleep(config.restart_script_interval)
+        except:
+            logger.error("скрипт крашнулся, жду 20 сек и перезапускаю")
+            doit.send_message("crash")
+            i+=1
+            if i > 5:
+                doit.error()
+                i = 0
+            time.sleep(20)
+            continue
+
+Thread(target=run).start()
+Thread(target=bot_run).start()

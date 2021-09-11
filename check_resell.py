@@ -37,7 +37,7 @@ async def check(session, url):
                         print('account invalid')
                         sql = "update accounts set sell_price = ? where link = ?"
                         data = (0, url)
-                        db.cur.execute(sql, data)
+                        db.cursor.execute(sql, data)
                     else:
                         price = int(res_block.find("span", class_="price").text.split()[0])
                         if price != 9999:
@@ -46,7 +46,7 @@ async def check(session, url):
                                 sum+=price
                                 sql = "update accounts set sell_price = ? where link = ?"
                                 data = (price, url)
-                                db.cur.execute(sql, data)
+                                # db.cur.execute(sql, data)
                             else:
                                 print(url)
                         # print('price = %s' % price)
@@ -70,7 +70,7 @@ async def main():
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
                                         "Chrome/86.0.4240.75 Safari/537.36"}) as session:
         tasks = []
-        rows = db.cur.execute("select * from accounts")
+        rows = db.cursor.execute("select * from accounts")
 
         for row in rows:
             line = row['link']
@@ -89,7 +89,7 @@ async def main():
 
 asyncio.run(main())
 print('final sum = %d ' % sum)
-asd = db.cur.execute("select * from accounts")
+asd = db.cursor.execute("select * from accounts")
 buy_sum = 0
 for row in asd:
     try:

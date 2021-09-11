@@ -87,20 +87,27 @@ def get_user_id():
     
     return user_id
 
-conn = sqlite3.connect('market.db')
+conn = sqlite3.connect('market.db', check_same_thread=False)
 cursor = conn.cursor()
 
-asd = """CREATE TABLE "accounts" (
+first_table = """CREATE TABLE "accounts" (
 	"id"	INTEGER,
 	"link"	TEXT,
 	"buy_price"	INTEGER,
 	"sell_price"	INTEGER,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );"""
+second_table = """CREATE TABLE "resell_price" (
+	"link"	TEXT,
+	"price"	INTEGER
+);"""
 try:
-    qwe = cursor.execute(asd)
+    qwa = cursor.execute(second_table)
     conn.commit()
-    print('table created')
+    qwe = cursor.execute(first_table)
+    conn.commit()
+    
+    print('tables created')
 except sqlite3.OperationalError:
     print('table existst')
     pass
