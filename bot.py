@@ -30,6 +30,7 @@ def echo_message(message):
         try:
             cursor.execute(sql, data)
             conn.commit()
+            bot.reply_to(message, "Принято!")
             print("link added")
 
         except sqlite3.Error as error:

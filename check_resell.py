@@ -20,9 +20,9 @@ def check_exist(link):
 
     if res:
         print("this link already in db")
-sum = 0
+# sum = 0
 async def check(session, url):
-    global sum
+    # global sum
     try:
         async with session.get(url) as resp:
             html = await resp.text()
@@ -43,10 +43,10 @@ async def check(session, url):
                         if price != 9999:
                             sold = res_block.find("span", class_="marketIndexItem--icon--paid")
                             if sold:
-                                sum+=price
+                                # sum+=price
                                 sql = "update accounts set sell_price = ? where link = ?"
                                 data = (price, url)
-                                # db.cur.execute(sql, data)
+                                db.cursor.execute(sql, data)
                             else:
                                 print(url)
                         # print('price = %s' % price)
@@ -70,7 +70,7 @@ async def main():
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
                                         "Chrome/86.0.4240.75 Safari/537.36"}) as session:
         tasks = []
-        rows = db.cursor.execute("select * from accounts")
+        rows = db.cursor.execute("select * from accounts where sell_price != 0")
 
         for row in rows:
             line = row['link']
@@ -88,14 +88,16 @@ async def main():
 
 
 asyncio.run(main())
-print('final sum = %d ' % sum)
 asd = db.cursor.execute("select * from accounts")
 buy_sum = 0
+sell_sum = 0
 for row in asd:
     try:
         buy_sum+=int(row['buy_price'])
+        sell_sum+=int(row['sell_price'])
     except TypeError:
         pass
 
 print(buy_sum)
+print(sell_sum)
 db.conn.commit()
