@@ -238,12 +238,10 @@ class LolzWorker():
 
         def get_price(link):
             links = db.cursor.execute("select * from resell_price").fetchall()
-
-            for ll in links:
+            for ll in links:    
                 if ll['link'] == link:
                     return ll['price']
-                else:
-                    return 9999
+            return 9999
         
         
 
