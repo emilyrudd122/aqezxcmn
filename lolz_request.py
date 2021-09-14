@@ -520,12 +520,10 @@ class LolzWorker():
                 tags_div = divv.find("div", class_="itemTags").find_all("span", class_="tag")[:-1]
 
                 time_till_end_guarant = self.get_time_till_guarantee(market_item)
-                if time_till_end_guarant < 0:
-                    self.remove_tag(full_market_link, self.guarant_tag)
-                    logger.info("На аккаунте %s убрана метка гарантии(она закончилась)" % full_market_link)
-                    self.send_message("Закончилась гарантия на %s, метка убрана" % full_market_link)
+
+                print(tags_div)
                         
-                if tags_div[0].text.lower() == "Невалид".lower():
+                if tags_div[0].text.lower() == "Невалид".lower() or tags_div[0].text.lower() == "Invalid".lower():
                     if i == 0:
                         message += "\n\nНевалид аккакунты:\n"
                         i=1
@@ -540,6 +538,11 @@ class LolzWorker():
                         nevalid_accs.append(full_market_link)
                     else:
                         logger.error("гарантия на аккаунт кончилась, не пишу арб, надо чекнуть ак вручную %s" % full_market_link)
+
+                if time_till_end_guarant < 0:
+                    self.remove_tag(full_market_link, self.guarant_tag)
+                    logger.info("На аккаунте %s убрана метка гарантии(она закончилась)" % full_market_link)
+                    self.send_message("Закончилась гарантия на %s, метка убрана" % full_market_link)
         
         if len(nevalid_accs) == 1:
             self.make_arb_account(nevalid_accs[0])
