@@ -21,6 +21,16 @@ def echo_message(message):
     msg = message.text
     link = msg.split()[0]
     print(link)
+    def check_link(link):
+        sql = cursor.execute("select * from resell_price where link = ?", (link, )).fetchone()
+
+        if sql:
+            return 1
+        return 0
+
+    if check_link(link):
+        bot.reply_to(message, "Для этого аккаунта уже установлена цена")
+        return
     splitmsg = msg.split('/')
     if splitmsg[2] == "lolz.guru" and splitmsg[3] == 'market':
         acc_price = splitmsg[-1].split()[0]

@@ -521,8 +521,6 @@ class LolzWorker():
 
                 time_till_end_guarant = self.get_time_till_guarantee(market_item)
 
-                print(tags_div)
-                        
                 if tags_div[0].text.lower() == "Невалид".lower() or tags_div[0].text.lower() == "Invalid".lower():
                     if i == 0:
                         message += "\n\nНевалид аккакунты:\n"
