@@ -115,6 +115,7 @@ class LolzWorker():
 
 
     def get_time_till_guarantee(self, market_item):
+        # print(market_item.find("a", class_="marketIndexItem--Title").text)
         try:
             vremya_pokupki_accounta = market_item.find("div", class_="marketIndexItem--otherInfo").find("abbr", class_="DateTime").get("data-time")
         except AttributeError:
@@ -122,16 +123,14 @@ class LolzWorker():
             return 0
         guarantee_time = market_item.find("span", class_="smallGuarantee")
         if guarantee_time == None:
-
             guarantee_time = market_item.find("span", class_="simpleGurantee")
             if guarantee_time == None:
-                guarantee_time = market_item.find_all("span", class_="stat")[1].find("span", class_="extendedGuarantee")
+                guarantee_time = market_item.find("span", class_="extendedGuarantee")
 
         if guarantee_time == None:
             logger.info("похоже что гарантия отменена")
             # print("похоже что гарантия отменена")
             return 0
-
         vremya_garantii = int(guarantee_time.text.split()[0])
         if vremya_garantii == 3:
             vremya_garantii = 72
@@ -459,18 +458,19 @@ class LolzWorker():
 
         # print(account_price)
         # print(seller_nickname)
-        arb_text = 'res' if not kt else 'kt'
+        arb_text = 'Случился respawn данного аккаунта ' if not kt else 'На данном аккаунте появилась красная табличка'
 
         data = {
             "as_responder": seller_nickname,
             "as_is_market_deal": 1,
             "as_market_item_link": market_link,
             "as_amount": account_price,
-            "as_evidence": arb_text,
+            "as_funds_receipt": "маркет",
+            "as_tg_login_screenshot": "маркет",
             "title": '',
             "message_html": f"<p>{arb_text}</p>",
             "_xfRelativeResolver": "https://lolz.guru/forums/239/create-thread?market_item_id=%s" % market_link.split("/")[-1],
-            "tags": '',
+            "tags": 'res, help, invalid, scam, arbitrage',
             "watch_thread": 1,
             "watch_thread_state": 1,
             "poll[question]": '',
@@ -487,6 +487,7 @@ class LolzWorker():
         }
 
         asd = get_post("https://lolz.guru/forums/arbitrage/add-thread", data)
+        logger.info(json.loads(asd.text))
         logger.success("Написал арбитраж на акк - %s (таймаут минута)" % market_link)
         self.send_message("Написан арбитраж на %s" % (market_link))
 
