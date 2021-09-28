@@ -115,13 +115,25 @@ class LolzWorker():
 
 
     def get_time_till_guarantee(self, market_item):
+
+        account_link = market_item.find("a", class_="marketIndexItem--Title").get("href")
+        soupch = BeautifulSoup(get_url("https://lolz.guru/"+account_link).text, 'html.parser')
+
+
         # print(market_item.find("a", class_="marketIndexItem--Title").text)
         try:
-            vremya_pokupki_accounta = market_item.find("div", class_="marketIndexItem--otherInfo").find("abbr", class_="DateTime").get("data-time")
+            # print(market_item.text)
+            if "проверен на валид" in soupch.find("div", class_="market--titleBar--info").text.lower():
+                vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[2].get("data-time")
+            else:
+                vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[1].get("data-time")
+            # print(vremya_pokupki_accounta)
         except AttributeError:
             print("не могу спарсить время до конца гарантии")
             return 0
+        
         guarantee_time = market_item.find("span", class_="smallGuarantee")
+        # logger.info(guarantee_time)
         if guarantee_time == None:
             guarantee_time = market_item.find("span", class_="simpleGurantee")
             if guarantee_time == None:
@@ -184,9 +196,11 @@ class LolzWorker():
                     inventory = soup.find_all("div", class_="marketItemView--counters")[0]
                     counters = inventory.find_all("div", class_="counter")
                     for counter in counters:
-                        inv = counter.find("div", class_="label").text.split('руб.')[0]
-                        inv_cost = ''.join([qwe for qwe in inv.split()])
-                        full_inv += int(inv_cost)
+                        inv_txt = counter.find("div", class_="label").text
+                        inv = inv_txt.split('руб.')[0]
+                        if 'руб.' in inv_txt:
+                            inv_cost = ''.join([qwe for qwe in inv.split()])
+                            full_inv += int(inv_cost)
                     return full_inv
                 except:
                     print("что то пошло не так при парсе инвентаря")
@@ -212,7 +226,7 @@ class LolzWorker():
                 if 'Rust' in game[0]:
                     nam += f"Rust ({game[1]}) "
             inv_txt = "Inv " + str(inv_cost) + " руб. |"
-            nazvanie = f"{nam} | {inv_txt if int(inv_cost) > 200 else ''} Inactive"
+            nazvanie = f"{nam} | {inv_txt if int(inv_cost) > 200 else ''} Inactive+offline"
 
             return nazvanie
         try:
@@ -260,7 +274,7 @@ class LolzWorker():
 
         account_price = soup.find("span", class_="price").text.split()[0]
 
-        resell_t = soup.find("a", class_="resellButton").get("href").split("=")[1]
+        resell_t = soup.find("a", class_="resellButton").get("href").split("=")[2]
 
         sell_price = get_price(market_link)
 
@@ -409,7 +423,7 @@ class LolzWorker():
             last_page = int(soup.find('div', class_="PageNav").get("data-last"))
         except AttributeError:
             last_page = 1
-
+        accs_for_resell = []
         for i in range(1, last_page+1):
             linkk = link_for_resell_accounts + "&page=%d" % i
             logger.info("парсирую аккаунты")
@@ -417,7 +431,7 @@ class LolzWorker():
             soup = BeautifulSoup(qwe.text, 'html.parser')
 
             market_items = soup.find_all("div", class_="marketIndexItem")
-            accs_for_resell = []
+            
             for market_item in market_items:
                 market_link = market_item.find("a", class_="marketIndexItem--Title").get('href')
                 full_market_link = "https://lolz.guru/" + market_link
@@ -436,13 +450,11 @@ class LolzWorker():
                     accs_for_resell.append(full_market_link)
         
         for acc in accs_for_resell:
-            asd = self.check_valid(acc)
-            if asd == 1:
-                logger.info("акк валид можно перепродавать %s" % acc)
-            elif asd == 2:
-                logger.info("акк валид можно перепродавать %s" % acc)
-            else:
-                continue 
+            # asd = self.check_valid(acc)
+            # if asd == 1:
+            #     logger.info("акк валид можно перепродавать %s" % acc)
+            # elif asd == 2:
+            #     logger.info("акк валид можно перепродавать %s" % acc)
             
             market_id = acc.split('/')[-2]
             self.resell_account(market_id, 'resell by bot', '9999')
@@ -453,7 +465,7 @@ class LolzWorker():
         market_page = get_url(market_link)
         soup = BeautifulSoup(market_page.text, 'html.parser')
 
-        seller_nickname = soup.find_all("a", class_="username")[1].text
+        seller_nickname = soup.find("div", class_="marketItemView--sidebarUser--Username").find("a", class_="username").text
         account_price = soup.find("span", class_="price").text.split()[0]
 
         # print(account_price)
@@ -545,6 +557,7 @@ class LolzWorker():
         
         if len(nevalid_accs) == 1:
             self.make_arb_account(nevalid_accs[0])
+            time.sleep(61)
         else:
             for acc in nevalid_accs:
                 self.make_arb_account(acc)
