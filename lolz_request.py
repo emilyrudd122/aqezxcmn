@@ -125,14 +125,9 @@ class LolzWorker():
             # print(market_item.text)
                 
 
-            asd = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")
-            if len(asd) == 3:
-                vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[2].get("data-time")
-            elif len(asd) == 2:
-                vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[1].get("data-time")
-            elif len(asd) == 1:
-                vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[0].get("data-time")
-            # print(vremya_pokupki_accounta)
+            # asd = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")
+            # print(len(asd))
+            vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[-1].get("data-time")
         except AttributeError:
             print("не могу спарсить время до конца гарантии")
             return 0
