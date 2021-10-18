@@ -21,7 +21,7 @@ def parse_xftoken():
     return xftoken
 
 xftoken = parse_xftoken()
-ids = [config.telegram_id, "1243095585", "473485315"]
+ids = [config.telegram_id, "1243095585", "473485315", "578827447"]
 bot = telebot.TeleBot("2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM")
 
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
@@ -86,10 +86,6 @@ def check_del(soup, link):
         return 0
     
     return 1
-
-
-
-
 
 def check_account_bought(soup):
     try:
@@ -183,16 +179,16 @@ async def check_account(session, link):
         change_price(link[0], price)
         changed = True
 
-    if changed:
-        qwe = book_account(link[0], price, soup)
-        if qwe == 1:
-            print("аккаунт уже забронирован")
-            return
-        send_notification(system=True, msg='можно покупать аккаунт %s' % link[0])
-        if "error" in qwe:
-            print("ошибка при брони")
-            print(qwe)
-            send_notification(system=True, msg='аккаунт не забронировался')
+    # if changed:
+    #     qwe = book_account(link[0], price, soup)
+    #     if qwe == 1:
+    #         print("аккаунт уже забронирован")
+    #         return
+    #     send_notification(system=True, msg='можно покупать аккаунт %s' % link[0])
+    #     if "error" in qwe:
+    #         print("ошибка при брони")
+    #         print(qwe)
+    #         send_notification(system=True, msg='аккаунт не забронировался')
 
     print(f"{price} - {link[0]}")
         
