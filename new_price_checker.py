@@ -65,6 +65,17 @@ cookies = make_coki()
 # print(cookies)
 headers = {'User-Agent':'Mozilla/5.0'}
 
+def set_account_status(link, status):
+    sql = "update accounts set status = ? where link = ?"
+    data = (int(status), link)
+    print(data)
+    try:
+        cur.execute(sql, data)
+        conn.commit()
+
+    except sqlite3.Error as error:
+        print("Failed to insert Python variable into sqlite table", error)
+
 def check_del(soup, link):
     asd = soup.find("label", class_="OverlayCloser")
 
@@ -76,16 +87,7 @@ def check_del(soup, link):
     
     return 1
 
-def set_account_status(link, status):
-    sql = "update accounts set status = ? where link = ?"
-    data = (int(status), link)
 
-    try:
-        cur.execute(sql, data)
-        conn.commit()
-
-    except sqlite3.Error as error:
-        print("Failed to insert Python variable into sqlite table", error)
 
 
 
@@ -163,7 +165,7 @@ async def check_account(session, link):
 
     soup = BeautifulSoup(html, 'html.parser')
 
-    if not check_del(soup, link):
+    if not check_del(soup, link[0]):
         return
     bought = check_account_bought(soup)
     price = get_price(soup)
@@ -192,7 +194,7 @@ async def check_account(session, link):
             print(qwe)
             send_notification(system=True, msg='аккаунт не забронировался')
 
-    print(f"{price} - {link}")
+    print(f"{price} - {link[0]}")
         
 
 
@@ -222,7 +224,7 @@ async def main():
             # print(tasks)
             await asyncio.gather(*tasks)
             tasks = []
-            time.sleep(1)
+            time.sleep(0.7)
 
         if l > 0:
             l = -l
@@ -232,7 +234,7 @@ async def main():
         
             await asyncio.gather(*tasks)
             tasks = []
-            time.sleep(1)
+            time.sleep(0.7)
 
 
 
