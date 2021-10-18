@@ -78,7 +78,7 @@ def check_del(soup, link):
 
 def set_account_status(link, status):
     sql = "update accounts set status = ? where link = ?"
-    data = (status, link)
+    data = (int(status), link)
 
     try:
         cur.execute(sql, data)
