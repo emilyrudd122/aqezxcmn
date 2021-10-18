@@ -2,17 +2,16 @@ import requests
 import base64
 import re
 from bs4 import BeautifulSoup
-import config
+from utils import config
 import sqlite3
-
-
 
 
 def getXenforoCookie():
     r = requests.get('https://lolz.guru/process-qv9ypsgmv9.js', headers={'User-Agent':'Mozilla/5.0'})
     cookieArray = re.search('^var _0x\w+=(.*?);', r.text).group(1)
     base64DfId = eval(cookieArray)[-1]
-    return base64.b64decode(base64DfId).decode()
+    res = base64.b64decode(base64DfId).decode()
+    return res
 
 def make_coki():
     cokies = config.cokies
@@ -29,7 +28,7 @@ def make_coki():
 
     return cookies
 
-def get_url(url):
+def get_url(url, cookies=make_coki()):
     """ returns page(requests object) """
 
     s = requests.Session()
@@ -39,7 +38,7 @@ def get_url(url):
     # print(cookies)
     page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki())
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=cookies)
     # print(page.cookies)
     return page
 
@@ -72,7 +71,7 @@ def get_post(url, data):
 
     page = s.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=100)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=500)
     return page
 
 def get_user_id():
@@ -87,7 +86,7 @@ def get_user_id():
     
     return user_id
 
-conn = sqlite3.connect('market.db', check_same_thread=False)
+conn = sqlite3.connect('databases/market.db', check_same_thread=False)
 cursor = conn.cursor()
 
 first_table = """CREATE TABLE "accounts" (
@@ -109,5 +108,5 @@ try:
     
     print('tables created')
 except sqlite3.OperationalError:
-    print('table existst')
+    # print('table existst')
     pass

@@ -1,7 +1,7 @@
-import config
+from utils import config
 import sqlite3
 import telebot
-from utils import conn, cursor
+from utils.utils import conn, cursor
 
 
 bot = telebot.TeleBot(config.token)

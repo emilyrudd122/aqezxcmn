@@ -127,7 +127,7 @@ dmypy.json
 migrations/
 
 logs/
-config.py
+utils/config.py
 test.py
 test.txt
 market.zip

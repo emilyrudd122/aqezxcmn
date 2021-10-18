@@ -7,11 +7,11 @@ from bs4 import BeautifulSoup
 from loguru import logger
 import json
 import telebot
-import config
+from utils import config
 import steam.webauth as wa
 import time
-from utils import get_url, get_post, display_time, get_user_id
-import db
+from utils.utils import get_url, get_post, display_time, get_user_id
+from utils import db
 from bot import bot_run
 from threading import Thread
 
@@ -72,9 +72,14 @@ class LolzWorker():
     def parse_xftoken(self):
         # print("начинаю парсить xftoken")
         logger.info("начинаю парсить xftoken")
-        asd = get_url("https://lolz.guru/")
-        soup = BeautifulSoup(asd.text, 'html.parser')
-        self.xftoken = soup.find('input', {'name':'_xfToken'})['value']
+        try:
+            asd = get_url("https://lolz.guru/")
+            soup = BeautifulSoup(asd.text, 'html.parser')
+        
+            self.xftoken = soup.find('input', {'name':'_xfToken'})['value']
+        except:
+            self.send_message("краш при парсе хфтокен")
+            return 0
         logger.info('token = %s' % self.xftoken)
 
     def parse_tags_id(self):
@@ -667,7 +672,10 @@ class LolzWorker():
     @logger.catch
     def main(self):
         # Здесь начинается парсинг аккаунтов по указанной ссылке
-        self.parse_xftoken()
+        asd = self.parse_xftoken()
+
+        if asd == 0:
+            return 'd'
         self.parse_tags_id()
 
 
@@ -747,9 +755,13 @@ i = 0
 def run():
     while True:
         try:
-            doit.main()
-            logger.info("Перезапуск через %s секунд" % config.restart_script_interval)
-            time.sleep(config.restart_script_interval)
+            q = doit.main()
+            if q == 'd':
+                logger.error("хфтокен еррор через 10 сек рестар")
+                time.sleep(10)
+            else:
+                logger.info("Перезапуск через %s секунд" % config.restart_script_interval)
+                time.sleep(config.restart_script_interval)
         except:
             logger.error("скрипт крашнулся, жду 20 сек и перезапускаю")
             doit.send_message("crash")
