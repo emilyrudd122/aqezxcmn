@@ -11,7 +11,7 @@ from price_checker import get_price, set_account_status
 import traceback
 from utils import config
 
-token = 2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM
+token = "2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM"
 
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
 conn.row_factory = sqlite3.Row
