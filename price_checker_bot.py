@@ -169,7 +169,7 @@ async def ann(message: types.Message):
     if check_user(message.from_user.id) == 2:
         ids = [config.telegram_id, "1243095585", "473485315", "578827447"]
         for id in ids:
-            bot.send_message(id, "пропишите /start")
+            await bot.send_message(id, "пропишите /start")
 
 
 @dp.message_handler(commands=['start'])
