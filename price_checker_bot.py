@@ -121,6 +121,10 @@ async def change_status(message: types.Message):
 
     await message.reply(f"Статус изменен на {spl[2]}")
 
+@dp.message_handler(commands=['exit'])
+async def exit(message: types.Message):
+    if check_user(message.from_user.id) == 2:
+        exit()
 
 @dp.message_handler(commands=['list'])
 async def send_list(message: types.Message):
