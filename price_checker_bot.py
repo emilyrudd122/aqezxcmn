@@ -10,6 +10,7 @@ import sqlite3
 from price_checker import get_price, set_account_status
 import traceback
 from utils import config
+import sys
 
 token = "2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM"
 
@@ -124,7 +125,7 @@ async def change_status(message: types.Message):
 @dp.message_handler(commands=['exit'])
 async def exit(message: types.Message):
     if check_user(message.from_user.id) == 2:
-        exit()
+        sys.exit()
 
 @dp.message_handler(commands=['list'])
 async def send_list(message: types.Message):
@@ -163,6 +164,12 @@ async def appr_user(message: types.Message):
         return
     await message.reply("user approved")
 
+@dp.message_handler(commands=['announce'])
+async def ann(message: types.Message):
+    if check_user(message.from_user.id) == 2:
+        ids = [config.telegram_id, "1243095585", "473485315", "578827447"]
+        for id in ids:
+            bot.send_message(id, "пропишите /start")
 
 
 @dp.message_handler(commands=['start'])
