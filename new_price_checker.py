@@ -21,12 +21,14 @@ def parse_xftoken():
     return xftoken
 
 xftoken = parse_xftoken()
-ids = [config.telegram_id, "1243095585", "473485315", "578827447"]
-bot = telebot.TeleBot("2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM")
+
+bot = telebot.TeleBot(config.market_bot_token)
 
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
 conn.row_factory = sqlite3.Row
 cur = conn.cursor()
+
+# ids = [config.telegram_id, "1243095585", "473485315", "578827447"]
 
 def getXenforoCookie():
     r = requests.get('https://lolz.guru/process-qv9ypsgmv9.js', headers={'User-Agent':'Mozilla/5.0'})
@@ -148,7 +150,7 @@ def change_price(link, new_price):
     except sqlite3.Error as error:
         print("Failed to insert Python variable into sqlite table", error)
 
-async def check_account(session, link):
+async def check_account(session, link, ids):
     html = ""
     try:
         async with session.get(link[0]) as resp:
@@ -195,6 +197,11 @@ async def check_account(session, link):
 
 
 async def main():
+    users = cur.execute("select * from users where approve = 1").fetchall()
+    ids = []
+    for user in users:
+        ids.append(user['telegram_id'])
+
     cur.execute("select * from accounts where status=0")
     res = cur.fetchall()
     links = []
@@ -215,7 +222,7 @@ async def main():
             w = q-ch
             # print(list[w:q])
             for link in links[w:q]:
-                task = asyncio.create_task(check_account(session, link))
+                task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
             # print(tasks)
             await asyncio.gather(*tasks)
@@ -225,7 +232,7 @@ async def main():
         if l > 0:
             l = -l
             for link in links[l:]:
-                task = asyncio.create_task(check_account(session, link))
+                task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
         
             await asyncio.gather(*tasks)
