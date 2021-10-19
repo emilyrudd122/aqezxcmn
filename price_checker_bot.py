@@ -73,7 +73,7 @@ bot = Bot(token=token)
 dp = Dispatcher(bot)
 
 def add_user(telegram_id, name):
-    sql = "insert into users(telegram_id, name, accs_amount, notify, admin) values (?, ?, 0, 0, 0)"
+    sql = "insert into users(telegram_id, name, accs_amount, notify, admin, approve) values (?, ?, 0, 0, 0, 0)"
     
     data = (telegram_id, name)
     try:
