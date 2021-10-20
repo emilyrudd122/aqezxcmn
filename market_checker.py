@@ -160,7 +160,7 @@ async def main():
             # print(tasks)
             await asyncio.gather(*tasks)
             tasks = []
-            time.sleep(0.1)
+            time.sleep(0.7)
 
         if l > 0:
             l = -l
@@ -170,7 +170,7 @@ async def main():
         
             await asyncio.gather(*tasks)
             tasks = []
-            time.sleep(0.1)
+            time.sleep(0.7)
 
 
     conn.commit()
