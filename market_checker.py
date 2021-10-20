@@ -129,13 +129,13 @@ async def parse_accounts(session, linkkk):
 
 links = [
         ["https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1", 'all'],
-        # ["https://lolz.guru/market/steam/?pmax=2000&game[]=252950&hours_played[252950]=400&origin[]=brute&origin[]=stealer&origin[]=fishing&origin[]=autoreg&origin[]=personal&nsb=1&order_by=price_to_up", "dan"],
-        # ["https://lolz.guru/market/steam/?pmax=500&game[]=730&daybreak=10&no_vac=1&rmin=1&rmax=1", "dan"],
-        # ["https://lolz.guru/market/steam/?pmax=525&game[]=221100&daybreak=10&no_vac=1&order_by=price_to_up", "dan"],
-        # ["https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=3000&order_by=price_to_up", "dan"],
-        # ["https://lolz.guru/market/steam/?game[]=252490&inv_game=252490&inv_min=500&order_by=price_to_up", "dan"],
-        # ["https://lolz.guru/market/steam/?game[]=570&inv_game=570&inv_min=1000&order_by=price_to_up", "dan"],
-        # ["https://lolz.guru/market/steam/?pmax=470&game[]=1293830&daybreak=15&order_by=price_to_up", "dan"],
+        ["https://lolz.guru/market/steam/?pmax=2000&game[]=252950&hours_played[252950]=400&origin[]=brute&origin[]=stealer&origin[]=fishing&origin[]=autoreg&origin[]=personal&nsb=1&order_by=price_to_up", "dan"],
+        ["https://lolz.guru/market/steam/?pmax=500&game[]=730&daybreak=10&no_vac=1&rmin=1&rmax=1", "dan"],
+        ["https://lolz.guru/market/steam/?pmax=525&game[]=221100&daybreak=10&no_vac=1&order_by=price_to_up", "dan"],
+        ["https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=3000&order_by=price_to_up", "dan"],
+        ["https://lolz.guru/market/steam/?game[]=252490&inv_game=252490&inv_min=500&order_by=price_to_up", "dan"],
+        ["https://lolz.guru/market/steam/?game[]=570&inv_game=570&inv_min=1000&order_by=price_to_up", "dan"],
+        ["https://lolz.guru/market/steam/?pmax=470&game[]=1293830&daybreak=15&order_by=price_to_up", "dan"],
 ]
 
 async def main():
@@ -160,7 +160,7 @@ async def main():
             # print(tasks)
             await asyncio.gather(*tasks)
             tasks = []
-            time.sleep(5)
+            time.sleep(0.5)
 
         if l > 0:
             l = -l
@@ -170,7 +170,7 @@ async def main():
         
             await asyncio.gather(*tasks)
             tasks = []
-            time.sleep(1.2)
+            time.sleep(0.5)
 
 
     conn.commit()
