@@ -141,7 +141,7 @@ links = [
 async def main():
     
     # link = "https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1"
-    async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
+    async with aiohttp.ClientSession(headers=headers, cookies=cookies, trust_env=True) as session:
         tasks = []
         ch = 4
         ll = len(links)//ch
