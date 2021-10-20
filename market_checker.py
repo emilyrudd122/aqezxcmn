@@ -178,6 +178,8 @@ async def main():
 if __name__ == "__main__":
     while True:
         try:
+            policy = asyncio.WindowsSelectorEventLoopPolicy()
+            asyncio.set_event_loop_policy(policy)
             asyncio.run(main())
         except Exception as e:
             bot.send_message(config.telegram_id, "краш автобая", parse_mode="html")
