@@ -101,7 +101,7 @@ async def parse_accounts(session, linkkk):
     print("checking")
     html = ""
     try:
-        async with session.get(linkkk[0], ssl=False) as resp:
+        async with session.get(linkkk[0], ssl=False, proxy="http://eNmpWw:Qtxd0t@213.226.76.161:8000") as resp:
             assert resp.status == 200
 
             html = await resp.text()
