@@ -3,6 +3,7 @@
 import sqlite3
 from datetime import datetime
 from logging import log
+import traceback
 from bs4 import BeautifulSoup
 from loguru import logger
 import json
@@ -75,9 +76,10 @@ class LolzWorker():
         try:
             asd = get_url("https://lolz.guru/")
             soup = BeautifulSoup(asd.text, 'html.parser')
-        
+            print(soup.prettify)
             self.xftoken = soup.find('input', {'name':'_xfToken'})['value']
-        except:
+        except Exception as e:
+            print(traceback.format_exc())
             self.send_message("краш при парсе хфтокен")
             return 0
         logger.info('token = %s' % self.xftoken)
@@ -773,4 +775,4 @@ def run():
             continue
 
 Thread(target=run).start()
-Thread(target=bot_run).start()
+# Thread(target=bot_run).start()

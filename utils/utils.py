@@ -31,7 +31,7 @@ def make_coki():
 
 
 
-def get_url(url, cookies=make_coki()):
+def get_url(url):
     """ returns page(requests object) """
 
     s = requests.Session()
@@ -41,8 +41,9 @@ def get_url(url, cookies=make_coki()):
     # print(cookies)
     page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=cookies)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki())
     # print(page.cookies)
+    print('ответ от страницы получен>>')
     return page
 
 def display_time(seconds, granularity=2):

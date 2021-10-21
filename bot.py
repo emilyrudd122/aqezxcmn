@@ -1,7 +1,9 @@
 from utils import config
 import sqlite3
 import telebot
+import traceback
 from utils.utils import conn, cursor
+import time
 
 
 bot = telebot.TeleBot(config.token)
@@ -47,4 +49,9 @@ def echo_message(message):
             print("Failed to insert Python variable into sqlite table", error)
 
 def bot_run():
-    bot.polling()
+    while True:
+        try:
+            bot.polling()
+        except Exception as e:
+            print(traceback.format_exc())
+            time.sleep(5)
