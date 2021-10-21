@@ -28,9 +28,6 @@ def make_coki():
 
     return cookies
 
-
-
-
 def get_url(url):
     """ returns page(requests object) """
 

@@ -76,7 +76,7 @@ class LolzWorker():
         try:
             asd = get_url("https://lolz.guru/")
             soup = BeautifulSoup(asd.text, 'html.parser')
-            print(soup.prettify)
+            # print(soup.prettify)
             self.xftoken = soup.find('input', {'name':'_xfToken'})['value']
         except Exception as e:
             print(traceback.format_exc())
