@@ -101,8 +101,8 @@ def announce(link, name, seller_name, cost, created_at, type, booked=False):
             # keyboard = InlineKeyboardMarkup()
             # keyboard.add(InlineKeyboardButton(text="Купить аккаунт", callback_data=f"buy {link} {cost}"))
             # bot.send_message(id, txt, reply_markup=keyboard, parse_mode='html')
-        else:
-            bot.send_message(id, txt, parse_mode='html')
+        # else:
+        bot.send_message(id, txt, parse_mode='html')
 
 def book_account(link, price, soup=''):
     if not soup:
