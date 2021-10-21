@@ -1,15 +1,22 @@
 import logging
+from os import stat
 from aiogram import Bot, Dispatcher, executor, types
 import aiogram
+from aiogram.types import message
+from aiogram.types.reply_keyboard import ReplyKeyboardRemove
 from requests import check_compatibility
 from utils import price_checker_help as helper
 from bs4 import BeautifulSoup
 import time
-from utils.utils import get_url
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
+from utils.utils import get_url, get_post
 import sqlite3
 from price_checker import get_price, set_account_status
 import traceback
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from utils import config
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import sys
 
 token = "2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM"
@@ -27,6 +34,36 @@ def check_user(telegram_id):
         if asd['admin'] == 1:
             return 2
         return True
+    return False
+
+
+
+def stop_buying(link):
+    try:
+        cur.execute("update accounts_check set buying = 0 where link = ?", (link, ))
+        conn.commit()
+    except:
+        print(f"error when starting buying {link}")
+        return False
+    print(f"started buying {link}")
+    return True
+
+def start_buying(link):
+    try:
+        cur.execute("update accounts_check set buying = 1 where link = ?", (link, ))
+        conn.commit()
+    except:
+        print(f"error when starting buying {link}")
+        return False
+    print(f"started buying {link}")
+    return True
+
+def check_buying(link):
+    cur.execute("select * from accounts_check where link = ?", (link, ))
+    res = cur.fetchone()
+    if res['buying']:
+        if int(res['buying']) == 1:
+            return True
     return False
 
 def check_account_isset(link):
@@ -71,7 +108,8 @@ def add_account(link, soup, buy_price=0, sender:types.Message=''):
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=token)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
 def add_user(telegram_id, name):
     sql = "insert into users(telegram_id, name, accs_amount, notify, admin, approve) values (?, ?, 0, 0, 0, 0)"
@@ -122,10 +160,10 @@ async def change_status(message: types.Message):
 
     await message.reply(f"Статус изменен на {spl[2]}")
 
-@dp.message_handler(commands=['exit'])
-async def exit(message: types.Message):
-    if check_user(message.from_user.id) == 2:
-        sys.exit()
+# @dp.message_handler(commands=['exit'])
+# async def exit(message: types.Message):
+#     if check_user(message.from_user.id) == 2:
+#         sys.exit()
 
 @dp.message_handler(commands=['list'])
 async def send_list(message: types.Message):
@@ -191,6 +229,159 @@ async def help(message: types.Message):
     
 
     await message.reply(help)
+
+class Buy_Acc(StatesGroup):
+    confirm_buy = State()
+    check_payment = State()
+    buy = State()
+
+
+
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('buy'))
+async def buy_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    res = callback_query.data.split()
+    if check_buying(res[1]):
+        await bot.send_message(callback_query.from_user.id, 'Этот аккаунт уже покупают')
+        return
+    
+    start_buying(res[1])
+
+    
+    async with state.proxy() as data:
+        data['link'] = res[1]
+        data['cost'] = res[2]
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add("Да", "Нет")
+
+    await Buy_Acc.confirm_buy.set()
+
+    await bot.send_message(callback_query.from_user.id, f"Вы хотите купить аккаунт? {res[1]}", reply_markup=markup)
+
+# @dp.message_handler(state='*', commands='отмена')
+# @dp.message_handler(Text(equals='отмена', ignore_case=True), state='*')
+# async def cancel_handler(message: types.Message, state: FSMContext):
+#     """
+#     Allow user to cancel any action
+#     """
+#     current_state = await state.get_state()
+#     if current_state is None:
+#         await message.reply('Действие отменено.', reply_markup=types.ReplyKeyboardRemove())
+#         return
+
+#     logging.info('Cancelling state %r', current_state)
+#     # Cancel state and inform user about it
+#     async with state.proxy() as data:
+#         print(data)
+#         if data['link'] != '':
+#             print(data['link'])
+#             stop_buying(data['link'])
+#     await state.finish()
+#     # And remove keyboard (just in case)
+#     await message.reply('Действие отменено.', reply_markup=types.ReplyKeyboardRemove())
+
+@dp.message_handler(lambda message: message.text not in ["Да", "Нет"], state=Buy_Acc.confirm_buy)
+async def process_gender_invalid(message: types.Message):
+    """
+    In this example gender has to be one of: Male, Female, Other.
+    """
+    return await message.reply("Неправильный вариант ответа")
+
+@dp.message_handler(state=Buy_Acc.confirm_buy)
+async def confirmbuy(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == "Да":
+            await Buy_Acc.check_payment.set()
+            txt = f"Для покупки аккаунта отправьте сюда(https://lolz.guru/zxxxcqq/) сумму = {data['cost']}\n\nПосле отправки нажмите кнопку \"Проверить оплату\""
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+            markup.add("Проверить оплату", "Отмена")
+            await Buy_Acc.buy.set()
+            await message.reply(txt, reply_markup=markup)
+        if message.text == "Нет":
+            current_state = await state.get_state()
+            if current_state is None:
+                return
+
+            logging.info('Cancelling state %r', current_state)
+            # Cancel state and inform user about it
+            stop_buying(data['link'])
+            await state.finish()
+            # And remove keyboard (just in case)
+            await message.reply('Действие отменено.', reply_markup=types.ReplyKeyboardRemove())
+
+def check_payment(payer, pp):
+    print(f"ищу {payer} с {pp}")
+    kk = get_url("https://lolz.guru/market/user/3764769/payments?type=money_transfer")
+
+    soup = BeautifulSoup(kk.text, 'html.parser')
+
+    pays = soup.find_all("div", class_="item")
+    for pay in pays:
+        amount = pay.find("div", class_="amountChange").text.split()
+        sender = pay.find("a", class_="username").text.lower()
+        # print(f"{sender} - {amount}")
+        try:
+            data = pay.find("div", class_="paymentFooter").find("abbr", class_="DateTime").get("data-diff")
+        except AttributeError:
+            break
+        
+        # print(data)
+        if len(amount) > 1:
+            # print(amount)
+            if int(amount[1]) == int(pp) and payer == sender and int(data) < 600:
+                print("Платеж найден")
+                return True
+            
+    return False
+
+
+def buy_account(link):
+    confirm_buy_link = link + 'confirm-buy'
+    data = {
+        "_xfToken": "3764769,1634793573,06fb428c2ebd74695ea34c9c527280912fc7b800",
+        "_xfConfirm": '1'
+    }
+    get_post(confirm_buy_link, data)
+
+@dp.message_handler(state=Buy_Acc.buy)
+async def checkpayment(message: types.Message, state: FSMContext):
+    if message.text == "Проверить оплату":
+        async with state.proxy() as data:
+            users = {
+                1243095585: 'shkila',
+                578827447: 'ihate4',
+                473485315: 'sashasty',
+            }
+            if not check_payment(users[message.from_user.id], data['cost']):
+                # markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+                # markup.add("Проверить оплату", "Отмена")
+                await message.reply("Платеж не найден")
+            else:
+                buy_account(data['link'])
+                await message.reply("Ваш платеж найден, аккаунт куплен, для получения писать сюда - @zxxxcqq", reply_markup=ReplyKeyboardRemove())
+
+                logging.info('Куплен аккаунт')
+                # Cancel state and inform user about it
+                stop_buying(data['link'])
+                await state.finish()
+                
+                # And remove keyboard (just in case)
+                # await message.reply('Действие отменено.', reply_markup=types.ReplyKeyboardRemove())
+    elif message.text == "Отмена":
+
+        current_state = await state.get_state()
+        if current_state is None:
+            return
+
+        logging.info('Cancelling state %r', current_state)
+        # Cancel state and inform user about it
+        async with state.proxy() as data:
+            stop_buying(data['link'])
+        await state.finish()
+        # And remove keyboard (just in case)
+        await message.reply('Действие отменено.', reply_markup=types.ReplyKeyboardRemove())
+
 
 @dp.message_handler()
 async def echo(message: types.Message):

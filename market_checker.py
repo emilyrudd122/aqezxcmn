@@ -1,3 +1,4 @@
+import logging
 import sys
 import traceback
 import time
@@ -11,6 +12,8 @@ from utils import config
 import sqlite3
 from utils.utils import get_url
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 import datetime
 
 def parse_xftoken():
@@ -42,12 +45,15 @@ def make_coki():
 
     return cookies
 
-bot = telebot.TeleBot("2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM")
+token = "2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM"
+
+bot = telebot.TeleBot(token)
 
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
 conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 
+xftoken = parse_xftoken()
 cookies = make_coki()
 headers = {'User-Agent':'Mozilla/5.0'}
 
@@ -66,42 +72,60 @@ def add_account(link, name, seller_id, cost):
     except sqlite3.Error as error:
         print("Failed to insert Python variable into sqlite table", error)
 
-def announce(link, name, seller_name, cost, created_at, type):
+def announce(link, name, seller_name, cost, created_at, type, booked=False):
     tt = datetime.datetime.now().strftime("%H:%M:%S")
     txt = f'---------------\n<b>[{tt}] Новый аккаунт, выложен {created_at}</b>\n\n{name}\n{cost}руб. from {seller_name}\nСсылка - {link}\n---------------'
     txt = f"""
 <b>[{tt}] Новый аккаунт, выложен {created_at}</b>
 
 {name}
-{cost} руб. аккаунт от {seller_name}
 
-Ссылка - {link}
+{cost} руб. аккаунт от {seller_name}
+Ссылка - {link} {'забронирован' if booked else ''}
 
 """
     print(txt)
+    ids = []
     if type == 'all':
-        print('all')
-        bot.send_message(config.telegram_id, txt, parse_mode="html")
-        bot.send_message("1243095585", txt, parse_mode="html")
+        ids = [config.telegram_id, "1243095585"]
     elif type == 'dan':
-        txt = f"""
-<b>[{tt}] Новый аккаунт, выложен {created_at}</b> DDD
+        txt += "\nddd"
+        ids = [config.telegram_id, '578827447']
+    elif type == 'test':
+        ids = [config.telegram_id]
 
-{name}
-{cost} руб. аккаунт от {seller_name}
+    for id in ids:
+        if booked:
+            print('keyboard')
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(text="Купить аккаунт", callback_data=f"buy {link} {cost}"))
+            bot.send_message(id, txt, reply_markup=keyboard, parse_mode='html')
+        else:
+            bot.send_message(id, txt, parse_mode='html')
 
-Ссылка - {link}
+def book_account(link, price, soup=''):
+    if not soup:
+        try:
+            soup = BeautifulSoup(get_url(link).text, 'html.parser')
+        except:
+            return False
+    buy_button = soup.find_all("a", class_="marketViewItem--buyButton")
+    if len(buy_button) > 1:
+        return False
 
-"""
-        print('dan')
-        bot.send_message(config.telegram_id, txt, parse_mode="html")
-        bot.send_message('578827447', txt, parse_mode='html')
+    market_id = link.split('/')[-2]
+    linkk = f"https://lolz.guru/market/{market_id}/balance/check?price={price}&=&_xfRequestUri=/market/{market_id}/&_xfNoRedirect=1&_xfToken={xftoken}&_xfResponseType=json"
+    # print(linkk)
+    asd = get_url(linkk)
+    answer = json.loads(asd.text)
+
+    return answer
 
 async def parse_accounts(session, linkkk):
     print("checking")
     html = ""
     try:
-        async with session.get(linkkk[0], ssl=False, proxy="http://eNmpWw:Qtxd0t@213.226.76.161:8000") as resp:
+        async with session.get(linkkk[0], ssl=False) as resp:
             assert resp.status == 200
 
             html = await resp.text()
@@ -112,7 +136,7 @@ async def parse_accounts(session, linkkk):
     soup = BeautifulSoup(html, 'html.parser')
 
     market_items = soup.find_all("div", class_="marketIndexItem")
-    for market_item in market_items:
+    for market_item in market_items[:3]:
         a_link = market_item.find("a", class_="marketIndexItem--Title")
         link = f"https://lolz.guru/{a_link.get('href')}"
         seller_id = market_item.find("div", class_="marketIndexItem--otherInfo").find("a", class_="username").get('href').split("/")[1]
@@ -121,27 +145,64 @@ async def parse_accounts(session, linkkk):
         cost = ''.join(div_cost)
         name = a_link.text
         created_at = market_item.find("span", class_="muted").text
-
-        if 'назад' in created_at or 'только' in created_at:
+        
+        dd = ['назад', 'сегодня', 'вчера', 'окт']
+        if 'sticky' in market_item['class'] and not 'bumped' in market_item['class'] and 'назад' in created_at.lower():
             if not check_account_exists(link):
+                asd = book_account(link, cost)
                 add_account(link, name, seller_id, cost)
-                announce(link, name, seller_name, cost, created_at, linkkk[1])
+                if not asd:
+                    announce(link, name, seller_name, cost, created_at, linkkk[1])
+                if asd and not 'error' in asd:
+                    print("забронирован акк")
+                    print(asd)
+                    announce(link, name, seller_name, cost, created_at, linkkk[1], booked=True)
+        elif not 'sticky' in market_item['class'] and not 'bumped' in market_item['class'] and any(qq in created_at.lower() for qq in dd):
+            if not check_account_exists(link):
+                asd = book_account(link, cost)
+                add_account(link, name, seller_id, cost)
+                if not asd:
+                    announce(link, name, seller_name, cost, created_at, linkkk[1])
+                if asd and not 'error' in asd:
+                    print("забронирован акк")
+                    print(asd)
+                    announce(link, name, seller_name, cost, created_at, linkkk[1], booked=True)
+            
+
+    for market_item in market_items[3:]:
+        # print(market_item['class'])
+        a_link = market_item.find("a", class_="marketIndexItem--Title")
+        link = f"https://lolz.guru/{a_link.get('href')}"
+        seller_id = market_item.find("div", class_="marketIndexItem--otherInfo").find("a", class_="username").get('href').split("/")[1]
+        seller_name = market_item.find("div", class_="marketIndexItem--otherInfo").find("a", class_="username").text
+        div_cost = market_item.find("div", class_='marketIndexItem--Price').text.split()
+        cost = ''.join(div_cost)
+        name = a_link.text
+        created_at = market_item.find("span", class_="muted").text
+        
+        dd = ['назад', 'сегодня', 'вчера']
+        if not 'bumped' in market_item['class'] and any(qq in created_at.lower() for qq in dd):
+            if not check_account_exists(link):
+                asd = book_account(link, cost)
+                add_account(link, name, seller_id, cost)
+                if not asd:
+                    announce(link, name, seller_name, cost, created_at, linkkk[1])
+                if asd and not 'error' in asd:
+                    print("забронирован акк")
+                    print(asd)
+                    announce(link, name, seller_name, cost, created_at, linkkk[1], booked=True)
+
 
 links = [
-        ["https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1", 'all'],
-        ["https://lolz.guru/market/steam/?pmax=2000&game[]=252950&hours_played[252950]=400&origin[]=brute&origin[]=stealer&origin[]=fishing&origin[]=autoreg&origin[]=personal&nsb=1&order_by=price_to_up", "dan"],
-        ["https://lolz.guru/market/steam/?pmax=500&game[]=730&daybreak=10&no_vac=1&rmin=1&rmax=1", "dan"],
-        ["https://lolz.guru/market/steam/?pmax=525&game[]=221100&daybreak=10&no_vac=1&order_by=price_to_up", "dan"],
-        ["https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=3000&order_by=price_to_up", "dan"],
-        ["https://lolz.guru/market/steam/?game[]=252490&inv_game=252490&inv_min=500&order_by=price_to_up", "dan"],
-        ["https://lolz.guru/market/steam/?game[]=570&inv_game=570&inv_min=1000&order_by=price_to_up", "dan"],
-        ["https://lolz.guru/market/steam/?pmax=470&game[]=1293830&daybreak=15&order_by=price_to_up", "dan"],
+    # ['https://lolz.guru/market/steam/?pmin=1&pmax=1&game[]=444200&daybreak=500&order_by=price_to_up', 'all']
+    ["https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1", 'all'],
+    # ["https://lolz.guru/market/steam/?game[]=730&rmin=1&order_by=pdate_to_down", 'test']
 ]
 
 async def main():
     
     # link = "https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1"
-    async with aiohttp.ClientSession(headers=headers, cookies=cookies, trust_env=False) as session:
+    async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
         tasks = []
         ch = 4
         ll = len(links)//ch
@@ -178,10 +239,11 @@ async def main():
 if __name__ == "__main__":
     while True:
         try:
-            policy = asyncio.WindowsSelectorEventLoopPolicy()
-            asyncio.set_event_loop_policy(policy)
+            # policy = asyncio.WindowsSelectorEventLoopPolicy()
+            # asyncio.set_event_loop_policy(policy)
             asyncio.run(main())
         except Exception as e:
             bot.send_message(config.telegram_id, "краш автобая", parse_mode="html")
             print(traceback.format_exc())
+            time.sleep(5)
             continue
