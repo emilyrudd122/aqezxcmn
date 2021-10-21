@@ -27,6 +27,7 @@ def gg():
 
 while True:
     try:
+        print('parsing xDxDxDxDxDxDxDxDxDxDxDxDxDxDxDxD')
         gg()
         time.sleep(5)
     except Exception as e:
