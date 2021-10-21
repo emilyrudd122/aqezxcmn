@@ -96,10 +96,11 @@ def announce(link, name, seller_name, cost, created_at, type, booked=False):
 
     for id in ids:
         if booked:
-            print('keyboard')
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton(text="Купить аккаунт", callback_data=f"buy {link} {cost}"))
-            bot.send_message(id, txt, reply_markup=keyboard, parse_mode='html')
+            pass
+            # print('keyboard')
+            # keyboard = InlineKeyboardMarkup()
+            # keyboard.add(InlineKeyboardButton(text="Купить аккаунт", callback_data=f"buy {link} {cost}"))
+            # bot.send_message(id, txt, reply_markup=keyboard, parse_mode='html')
         else:
             bot.send_message(id, txt, parse_mode='html')
 
@@ -146,7 +147,7 @@ async def parse_accounts(session, linkkk):
         name = a_link.text
         created_at = market_item.find("span", class_="muted").text
         
-        dd = ['назад', 'сегодня', 'вчера', 'окт']
+        dd = ['назад', 'сегодня', 'вчера']
         if 'sticky' in market_item['class'] and not 'bumped' in market_item['class'] and 'назад' in created_at.lower():
             if not check_account_exists(link):
                 asd = book_account(link, cost)
