@@ -1,3 +1,4 @@
+import traceback
 import requests
 import base64
 import re
@@ -37,19 +38,24 @@ def make_coki():
 def get_url(url):
     """ returns page(requests object) """
     print(f"отправил запрос {url}")
-    s = requests.Session()
-    # cookies = config.cookies
-    # url = "https://lolz.guru/market/16461695/"
-
-    # print(cookies)
-    coki = make_coki()
-    if coki == None:
-        return None
     try:
-        page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        # s = requests.Session()
+        # cookies = config.cookies
+        # url = "https://lolz.guru/market/16461695/"
+
+        # print(cookies)
+        coki = make_coki()
+        url = url.replace(' ', '')
+        
+        if coki == None:
+            return None
+        print(1)
+        page = requests.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki, timeout=1000)
-    except:
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki, timeout=5)
+        print(2)
+    except Exception as e:
+        print(traceback.format_exc())
         return None
     # print(page.cookies)
     print('ответ от страницы получен>>')
@@ -90,6 +96,8 @@ def get_post(url, data):
 def get_user_id():
     """ returns user_id on lolz.guru """
     main_page = get_url("https://lolz.guru/")
+    if not main_page:
+        return None
     soup = BeautifulSoup(main_page.text, 'html.parser')
     # print(soup)
     asd = soup.find(id="AccountMenu")
