@@ -52,6 +52,7 @@ bot = telebot.TeleBot(token)
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
 conn.row_factory = sqlite3.Row
 cur = conn.cursor()
+conn.commit()   
 
 xftoken = parse_xftoken()
 cookies = make_coki()
@@ -122,20 +123,25 @@ def book_account(link, price, soup=''):
 
     return answer
 
-async def parse_accounts(session, linkkk):
+def parse_accounts(linkkk):
     print("checking")
     html = ""
     try:
-        async with session.get(linkkk[0], ssl=False) as resp:
-            assert resp.status == 200
+        asd = get_url(linkkk[0])
+        # assert asd. == 200
 
-            html = await resp.text()
+        html = asd.text
     except Exception as e:
         print(traceback.format_exc())
+        bot.send_message(config.telegram_id, "не парсится маркет", parse_mode="html")
         return
 
     soup = BeautifulSoup(html, 'html.parser')
-
+    
+    print(linkkk[0])
+    balance = soup.find_all("span", class_="balanceNumber")[0].find("span", "balanceValue").text.split()
+    # print(balance)
+    balance = ''.join(balance)
     market_items = soup.find_all("div", class_="marketIndexItem")
     for market_item in market_items[:3]:
         a_link = market_item.find("a", class_="marketIndexItem--Title")
@@ -146,11 +152,13 @@ async def parse_accounts(session, linkkk):
         cost = ''.join(div_cost)
         name = a_link.text
         created_at = market_item.find("span", class_="muted").text
+
         
         dd = ['назад', 'сегодня', 'вчера']
         if 'sticky' in market_item['class'] and not 'bumped' in market_item['class'] and 'назад' in created_at.lower():
             if not check_account_exists(link):
-                asd = book_account(link, cost)
+                if int(balance) > int(cost):
+                    asd = book_account(link, cost)
                 add_account(link, name, seller_id, cost)
                 if not asd:
                     announce(link, name, seller_name, cost, created_at, linkkk[1])
@@ -160,7 +168,8 @@ async def parse_accounts(session, linkkk):
                     announce(link, name, seller_name, cost, created_at, linkkk[1], booked=True)
         elif not 'sticky' in market_item['class'] and not 'bumped' in market_item['class'] and any(qq in created_at.lower() for qq in dd):
             if not check_account_exists(link):
-                asd = book_account(link, cost)
+                if int(balance) > int(cost):
+                    asd = book_account(link, cost)
                 add_account(link, name, seller_id, cost)
                 if not asd:
                     announce(link, name, seller_name, cost, created_at, linkkk[1])
@@ -184,7 +193,8 @@ async def parse_accounts(session, linkkk):
         dd = ['назад', 'сегодня', 'вчера']
         if not 'bumped' in market_item['class'] and any(qq in created_at.lower() for qq in dd):
             if not check_account_exists(link):
-                asd = book_account(link, cost)
+                if int(balance) > int(cost):
+                    asd = book_account(link, cost)
                 add_account(link, name, seller_id, cost)
                 if not asd:
                     announce(link, name, seller_name, cost, created_at, linkkk[1])
@@ -200,51 +210,60 @@ links = [
     # ["https://lolz.guru/market/steam/?game[]=730&rmin=1&order_by=pdate_to_down", 'test']
 ]
 
-async def main():
+def main():
     
-    # link = "https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1"
-    async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
-        tasks = []
-        ch = 4
-        ll = len(links)//ch
-        l = len(links)%ch
-
-        # print(ll)
-        # print(l)
-
-        for i in range(1, ll+1):
-            q = i*ch
-            w = q-ch
-            # print(list[w:q])
-            for link in links[w:q]:
-                task = asyncio.create_task(parse_accounts(session, link))
-                tasks.append(task)
-            # print(tasks)
-            await asyncio.gather(*tasks)
-            tasks = []
-            time.sleep(0.5)
-
-        if l > 0:
-            l = -l
-            for link in links[l:]:
-                task = asyncio.create_task(parse_accounts(session, link))
-                tasks.append(task)
-        
-            await asyncio.gather(*tasks)
-            tasks = []
-            time.sleep(0.5)
-
+    for link in links:
+        parse_accounts(link)
+        time.sleep(2)
 
     conn.commit()
+    # # link = "https://lolz.guru/market/steam/?game[]=730&inv_game=730&inv_min=1000&order_by=pdate_to_down&fromBtn=1"
+    # async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
+    #     tasks = []
+    #     ch = 4
+    #     ll = len(links)//ch
+    #     l = len(links)%ch
+
+    #     # print(ll)
+    #     # print(l)
+
+    #     for link in links:
+    #         task = asyncio.create_task(parse_accounts(session, link))
+    #         tasks.append(task)
+
+        # for i in range(1, ll+1):
+        #     q = i*ch
+        #     w = q-ch
+        #     # print(list[w:q])
+        #     for link in links[w:q]:
+        #         task = asyncio.create_task(parse_accounts(session, link))
+        #         tasks.append(task)
+        #     # print(tasks)
+        #     await asyncio.gather(*tasks)
+        #     tasks = []
+        #     time.sleep(0.5)
+
+        # if l > 0:
+        #     l = -l
+        #     for link in links[l:]:
+        #         task = asyncio.create_task(parse_accounts(session, link))
+        #         tasks.append(task)
+        
+        # await asyncio.gather(*tasks)
+        # time.sleep(0.5)
+
+
+    
 
 if __name__ == "__main__":
     while True:
         try:
             # policy = asyncio.WindowsSelectorEventLoopPolicy()
             # asyncio.set_event_loop_policy(policy)
-            asyncio.run(main())
+            # asyncio.run(main())
+            main()
         except Exception as e:
-            bot.send_message(config.telegram_id, "краш автобая", parse_mode="html")
+            bot.send_message(config.telegram_id, "краш market_checker", parse_mode="html")
             print(traceback.format_exc())
             time.sleep(5)
             continue

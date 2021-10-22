@@ -91,6 +91,9 @@ def check_del(soup, link):
 
 def check_account_bought(soup):
     try:
+
+
+
         # soup = BeautifulSoup(get_url(link).text, 'html.parser')
         buy_button = soup.find("a", class_="marketViewItem--buyButton")
         if buy_button:
@@ -159,9 +162,12 @@ async def check_account(session, link, ids):
             html = await resp.text()
     except Exception as e:
         print(traceback.format_exc())
-        return
+        return None
 
     soup = BeautifulSoup(html, 'html.parser')
+    username = soup.find("a", class_="username")
+    if not username:
+        return None
 
     if not check_del(soup, link[0]):
         return
@@ -210,7 +216,7 @@ async def main():
     
     async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
         tasks = []
-        ch = 4
+        ch = 3
         ll = len(links)//ch
         l = len(links)%ch
 
@@ -225,7 +231,11 @@ async def main():
                 task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
             # print(tasks)
-            await asyncio.gather(*tasks)
+            try:
+                await asyncio.gather(*tasks)
+            except:            
+                print("creah")
+                return None
             tasks = []
             time.sleep(0.7)
 
@@ -235,7 +245,11 @@ async def main():
                 task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
         
-            await asyncio.gather(*tasks)
+            try:
+                await asyncio.gather(*tasks)
+            except:
+                print("creah")
+                return None
             tasks = []
             time.sleep(0.7)
 
@@ -244,7 +258,12 @@ async def main():
 
 if __name__ == "__main__":
     while True:
-        asyncio.run(main())
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(main())
+        except:
+            print('creash')
+            time.sleep(5)
         # time.sleep(3)
 
 # loop = asyncio.get_event_loop()
