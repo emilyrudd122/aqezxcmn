@@ -36,7 +36,7 @@ def make_coki():
 
 def get_url(url):
     """ returns page(requests object) """
-    print("отправил запрос")
+    print(f"отправил запрос {url}")
     s = requests.Session()
     # cookies = config.cookies
     # url = "https://lolz.guru/market/16461695/"
