@@ -45,9 +45,12 @@ def get_url(url):
     coki = make_coki()
     if coki == None:
         return None
-    page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    try:
+        page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki, timeout=1000)
+    except:
+        return None
     # print(page.cookies)
     print('ответ от страницы получен>>')
     return page
