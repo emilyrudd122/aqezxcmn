@@ -7,7 +7,10 @@ import sqlite3
 
 
 def getXenforoCookie():
-    r = requests.get('https://lolz.guru/process-qv9ypsgmv9.js', headers={'User-Agent':'Mozilla/5.0'})
+    try:
+        r = requests.get('https://lolz.guru/process-qv9ypsgmv9.js', headers={'User-Agent':'Mozilla/5.0'})
+    except:
+        return None
     cookieArray = re.search('^var _0x\w+=(.*?);', r.text).group(1)
     base64DfId = eval(cookieArray)[-1]
     res = base64.b64decode(base64DfId).decode()
@@ -17,10 +20,13 @@ def make_coki():
     cokies = config.cokies
     asd = cokies.split(';')
     ckies = {}
+    xf = getXenforoCookie()
+    if xf == None:
+        return None
     for qwe in asd:
         qq = qwe.split("=")
         if qq[0].split()[0] == 'df_id':
-            ckies[qq[0].split()[0]] = getXenforoCookie()
+            ckies[qq[0].split()[0]] = xf
             continue
         ckies[qq[0].split()[0]] = qq[1]
 
@@ -36,9 +42,12 @@ def get_url(url):
     # url = "https://lolz.guru/market/16461695/"
 
     # print(cookies)
+    coki = make_coki()
+    if coki == None:
+        return None
     page = s.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki())
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki)
     # print(page.cookies)
     print('ответ от страницы получен>>')
     return page
