@@ -23,6 +23,7 @@ def make_coki():
     ckies = {}
     xf = getXenforoCookie()
     if xf == None:
+        print("Ошибка при парсе куков")
         return None
     for qwe in asd:
         qq = qwe.split("=")
@@ -49,13 +50,14 @@ def get_url(url):
         
         if coki == None:
             return None
-        print(1)
+        # print(1)
         page = requests.get(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
                                         "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki, timeout=5)
-        print(2)
+        # print(2)
     except Exception as e:
         print(traceback.format_exc())
+        print("Ошибка при парсе страницы")
         return None
     # print(page.cookies)
     print('ответ от страницы получен>>')

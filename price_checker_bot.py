@@ -215,8 +215,9 @@ async def send_welcome(message: types.Message):
     if check_user(message.from_user.id):
         await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowere by fukc")
     else:
-        add_user(message.from_user.id, message.from_user.first_name)
-        await bot.send_message(1647564460, "Новый юзер")
+        if not check_user(message.from_user.id):
+            add_user(message.from_user.id, message.from_user.first_name)
+            await bot.send_message(1647564460, "Новый юзер")
         await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowere by fukc")
 
 @dp.message_handler(commands=["help"])
