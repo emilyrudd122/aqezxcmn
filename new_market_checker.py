@@ -17,6 +17,7 @@ class Announce(Enum):
     ALL = 'all'
     DAN = 'dan'
     ADMIN = 'admin'
+    HARITON = 'hariton'
 
 class MarketLinks:
     """['ссылка на маркет, которую надо чекать', 'Кого оповещать если появится новый акк']"""
@@ -132,6 +133,9 @@ class MarketChecker():
             self.bot.send_message(1647564460, msg, parse_mode='html')
             self.bot.send_message(578827447, msg, parse_mode='html')
             self.bot.send_message(1243095585, msg, parse_mode='html')
+        elif link.announce == Announce.HARITON:
+            self.bot.send_message(1647564460, msg, parse_mode='html')
+            self.bot.send_message(473485315, msg, parse_mode='html')
             
 
     def insert_account_db(self, account: Account):
