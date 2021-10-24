@@ -91,9 +91,6 @@ def check_del(soup, link):
 
 def check_account_bought(soup):
     try:
-
-
-
         # soup = BeautifulSoup(get_url(link).text, 'html.parser')
         buy_button = soup.find("a", class_="marketViewItem--buyButton")
         if buy_button:
@@ -187,16 +184,16 @@ async def check_account(session, link, ids):
         change_price(link[0], price)
         changed = True
 
-    # if changed:
-    #     qwe = book_account(link[0], price, soup)
-    #     if qwe == 1:
-    #         print("аккаунт уже забронирован")
-    #         return
-    #     send_notification(system=True, msg='можно покупать аккаунт %s' % link[0])
-    #     if "error" in qwe:
-    #         print("ошибка при брони")
-    #         print(qwe)
-    #         send_notification(system=True, msg='аккаунт не забронировался')
+    if changed:
+        qwe = book_account(link[0], price, soup)
+        if qwe == 1:
+            print("аккаунт уже забронирован")
+            return
+        send_notification(system=True, msg='можно покупать аккаунт %s' % link[0])
+        if "error" in qwe:
+            print("ошибка при брони")
+            print(qwe)
+            send_notification(system=True, msg='аккаунт не забронировался')
 
     print(f"{price} - {link[0]}")
         
@@ -235,6 +232,7 @@ async def main():
                 await asyncio.gather(*tasks)
             except:            
                 print("creah")
+                print(traceback.format_exc())
                 return None
             tasks = []
             time.sleep(2)
@@ -249,6 +247,7 @@ async def main():
                 await asyncio.gather(*tasks)
             except:
                 print("creah")
+                print(traceback.format_exc())
                 return None
             tasks = []
             time.sleep(2)
