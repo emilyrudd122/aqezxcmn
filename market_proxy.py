@@ -16,19 +16,17 @@ import random
 with open('utils/proxy.txt') as f:
     proxies = f.readlines()
 
-i=0
-
 def take_proxy():
     global lines
     global i
-    # a = random.randint(1,len(proxies)-1)
+    a = random.randint(1,len(proxies)-1)
 
-    proxy = proxies[i].replace('\n', '')
+    proxy = proxies[a].replace('\n', '')
     prox = {
         "http": f"http://{proxy}",
         "https": f"http://{proxy}",
     }
-    i+=1
+    # i+=1
     # print(prox)
     return prox
 
