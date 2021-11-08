@@ -264,7 +264,7 @@ while True:
     try:
         market.start_check()
         print('sleep')
-        time.sleep(0.5)
+        time.sleep(2)
     except Exception as e:
         print(traceback.format_exc())
         print("crash, sleep 2 sec")
