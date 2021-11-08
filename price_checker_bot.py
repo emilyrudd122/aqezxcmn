@@ -19,7 +19,7 @@ from utils import config
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import sys
 
-token = "2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM"
+token = config.market_bot_token
 
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
 conn.row_factory = sqlite3.Row
@@ -30,7 +30,7 @@ def check_user(telegram_id):
     asd = cur.fetchone()
     if asd:
         if asd['approve'] == 0:
-            return False
+            return 3
         if asd['admin'] == 1:
             return 2
         return True
@@ -160,6 +160,10 @@ async def change_status(message: types.Message):
 
     await message.reply(f"Статус изменен на {spl[2]}")
 
+@dp.message_handler(commands=['remove'])
+async def remove_keyboard(message: types.Message):
+    await message.reply("Нубик! =)", reply_markup=ReplyKeyboardRemove())
+
 # @dp.message_handler(commands=['exit'])
 # async def exit(message: types.Message):
 #     if check_user(message.from_user.id) == 2:
@@ -212,13 +216,30 @@ async def ann(message: types.Message):
 
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
-    if check_user(message.from_user.id):
+    if check_user(message.from_user.id) == True:
         await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowere by fukc")
     else:
-        if not check_user(message.from_user.id):
+        if check_user(message.from_user.id) != True:
             add_user(message.from_user.id, message.from_user.first_name)
             await bot.send_message(1647564460, "Новый юзер")
         await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowere by fukc")
+
+@dp.message_handler(commands=["book"])
+async def book_market(message: types.Message):
+    if check_user(message.from_user.id) != 2:
+        return
+    cur.execute("select * from settings where id = 1")
+    asd = cur.fetchone()
+
+    if asd['book_market'] == 1:
+        await message.reply("Бронирование маркет выключено")
+        cur.execute("update settings set book_market = 0 where id = 1")
+        conn.commit()
+    elif asd['book_market'] == 0:
+        await message.reply("Бронирование маркет включено")
+        cur.execute("update settings set book_market = 1 where id = 1")
+        conn.commit()
+
 
 @dp.message_handler(commands=["help"])
 async def help(message: types.Message):
@@ -410,7 +431,7 @@ async def echo(message: types.Message):
         if not helper.is_digit(spl[1]):
             await message.reply("что - то указано не так\nшаблон отправки:\n[ссылка на акк] [цена покупки аккаунта или ничего]\nпример:\nhttps://lolz.guru/market/1233321/ 5000")
             return
-        res = add_account(spl[0], buy_price=spl[1], sender=message)
+        res = add_account(spl[0], acc_page, buy_price=spl[1], sender=message)
         if res != 2:
             await message.reply("аккаунт добавлен с ценой покупки = %s(текущая цена = %s)" % (spl[1], res))
         elif res == 5:

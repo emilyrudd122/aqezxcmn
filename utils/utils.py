@@ -5,6 +5,8 @@ import re
 from bs4 import BeautifulSoup
 from utils import config
 import sqlite3
+import datetime
+
 
 
 def getXenforoCookie():
@@ -38,7 +40,7 @@ def make_coki():
 
 def get_url(url):
     """ returns page(requests object) """
-    print(f"отправил запрос {url}")
+    print(f"""{str(datetime.datetime.now().strftime("%H:%M:%S"))} отправил запрос {url}""")
     try:
         # s = requests.Session()
         # cookies = config.cookies

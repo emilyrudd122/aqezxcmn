@@ -22,7 +22,7 @@ def parse_xftoken():
 
 xftoken = parse_xftoken()
 
-bot = telebot.TeleBot("2095381518:AAHv9IxWYbMHvQuRWMHLNlTl5bYpYA5LoZM")
+bot = telebot.TeleBot(config.market_bot_token)
 
 conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
 conn.row_factory = sqlite3.Row
@@ -44,7 +44,8 @@ def send_notification(ids='', link='', first_price='', new_price='', system=Fals
     try:
         for id in ids:
             bot.send_message(id, "%s цена изменена с %s на %s %s" % (link, first_price, new_price, tt))
-    except:
+    except Exception as e:
+        print(traceback.format_exc())
         print("ошибка при отправке оповещения в телеграм")
 
 
@@ -184,7 +185,16 @@ async def check_account(session, link, ids):
         change_price(link[0], price)
         changed = True
 
-    if changed:
+    def check_booking():
+        cur.execute("select * from settings where id = 1")
+        res = cur.fetchone()
+
+        if res['book_market'] == 1:
+            return True
+        elif res['book_market'] == 0:
+            return False
+
+    if changed and check_booking():
         qwe = book_account(link[0], price, soup)
         if qwe == 1:
             print("аккаунт уже забронирован")
@@ -207,6 +217,10 @@ async def main():
 
     cur.execute("select * from accounts where status=0")
     res = cur.fetchall()
+    if not res:
+        print('net akkov')
+        time.sleep(40)
+        return
     links = []
     for r in res:
         links.append([r['link'], r['first_price']])
@@ -261,6 +275,7 @@ if __name__ == "__main__":
             loop = asyncio.get_event_loop()
             loop.run_until_complete(main())
         except:
+            print(traceback.format_exc())
             print('creash')
             time.sleep(5)
         # time.sleep(3)

@@ -1,15 +1,36 @@
 import time
 import traceback
-from typing import List, Tuple
+from typing import List
 from enum import Enum
 from dataclasses import dataclass
 import sqlite3
 from bs4 import BeautifulSoup
 import json
-from utils.utils import get_url
+# from utils.utils import get_url
+from utils.test_utils import get_url
 import telebot
 from utils import config
 import datetime
+import random
+
+with open('utils/proxy.txt') as f:
+    proxies = f.readlines()
+
+i=0
+
+def take_proxy():
+    global lines
+    global i
+    # a = random.randint(1,len(proxies)-1)
+
+    proxy = proxies[i].replace('\n', '')
+    prox = {
+        "http": f"http://{proxy}",
+        "https": f"http://{proxy}",
+    }
+    i+=1
+    # print(prox)
+    return prox
 
 
 class Announce(Enum):
@@ -51,12 +72,14 @@ class MarketChecker():
 
     def __init__(self):
         self.links = []
+        self.tokens = {}
         self.conn = sqlite3.connect('databases/lolz_market_bot.db')
         self.conn.row_factory = sqlite3.Row
         self.cur = self.conn.cursor()
         self.xftoken = ""
         # TODO: вынести токен в конфиг
         self.bot = telebot.TeleBot(token=config.market_bot_token)
+        self.proxy = ''
 
     def get_account(self, link: str) -> Account or None:
         """Возвращает Account или False если такого аккаунта нет(по указанной ссылке)"""
@@ -103,12 +126,14 @@ class MarketChecker():
 
     def parse_xftoken(self):
         print("начинаю парсить xftoken")
-        asd = get_url("https://lolz.guru/")
+        asd = get_url("https://lolz.guru/", self.proxy, True)
         if not asd:
             return None
         soup = BeautifulSoup(asd.text, 'lxml')
+        if "Please enable JavaScript and Cookies in your browser" in soup.text:
+            print("Please enable JavaScript and Cookies in your browser")
+            return None
         xftoken = soup.find('input', {'name':'_xfToken'})['value']
-        # print('token = %s' % xftoken)
 
         return xftoken
 
@@ -117,13 +142,15 @@ class MarketChecker():
 
         link = f"https://lolz.guru/market/{market_id}/balance/check?price={account.cost}&=&_xfRequestUri=/market/{market_id}/&_xfNoRedirect=1&_xfToken={self.xftoken}&_xfResponseType=json"
         # print(linkk)
-        page = get_url(link)
+        page = get_url(link, self.proxy)
         if not page:
             return None
         answer = json.loads(page.text)
         if 'error' in answer:
             print(answer['error'])
             return None
+        # print(answer)
+        print(f"аккаунт забронен {account.link}")
         return answer
 
     def send_announce_telegram(self, account: MarketItemAccount, link: MarketLinks):
@@ -163,6 +190,7 @@ class MarketChecker():
         data = (account.link, account.name, account.seller_id, account.cost)
         try:
             self.cur.execute(sql, data)
+            self.conn.commit()
 
         except sqlite3.Error as error:
             print("Failed to insert Python variable into sqlite table", error)
@@ -178,15 +206,37 @@ class MarketChecker():
         self.send_announce_telegram(account, link)
         
     def start_check(self):
-        self.conn.commit()
         self.links = self.parse_links()
-        if self.xftoken == '':
+        self.proxy = take_proxy()
+        
+        print(self.proxy['http'])
+        
+        proxy = self.cur.execute("select * from proxy where ip = ?", (self.proxy['http'], ))
+        prox = proxy.fetchone()
+        if not prox:
+            print("no proxy in db")
             self.xftoken = self.parse_xftoken()
+            if self.xftoken == None:
+                print("ошибка при парсе хфтокен")
+                return
+            self.cur.execute("update proxy set xftoken=? where ip=?", (self.xftoken, self.proxy['http']))
+            self.conn.commit()
+        else:
+            self.xftoken = prox['xftoken']
+            print(self.xftoken)
+        # return
         dd = ['назад', 'сегодня', 'вчера', 'только']
         for link in self.links:
-            page = get_url(link.link)
+            
+            page = get_url(link.link, self.proxy)
+            while not page:
+                print("changing cookie and xftoken")
+                page = get_url(link.link, self.proxy, remake_cookie=True)
+                # self.xftoken = self.parse_xftoken()
+                time.sleep(2)
 
             soup = BeautifulSoup(page.text, 'lxml')
+
             market_items = soup.find_all("div", class_="marketIndexItem")
 
             for market_item in market_items[:3]:
@@ -206,16 +256,16 @@ class MarketChecker():
                             print(account.name)
                             self.new_account_job(account, link)
 
-                    
-        self.conn.commit()
+        
         
 market = MarketChecker()
 
 while True:
     try:
         market.start_check()
-        # time.sleep(1)
+        print('sleep')
+        time.sleep(0.5)
     except Exception as e:
         print(traceback.format_exc())
-        print("crash, sleep 10 sec")
-        time.sleep(10)
+        print("crash, sleep 2 sec")
+        time.sleep(2)

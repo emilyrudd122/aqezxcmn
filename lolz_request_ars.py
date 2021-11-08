@@ -8,10 +8,10 @@ from bs4 import BeautifulSoup
 from loguru import logger
 import json
 import telebot
-from utils import config
+from utils import cccc
 import steam.webauth as wa
 import time
-from utils.utils import get_url, get_post, display_time, get_user_id
+from utils.ccc import get_url, get_post, display_time, get_user_id
 from utils import db
 from bot import bot_run
 from threading import Thread
@@ -31,7 +31,7 @@ class LolzWorker():
         self.arbitrage_tag = ''
         self.guard_tag = ''
         self.bot_sold_tag = ''
-        self.tb = telebot.TeleBot(config.token)
+        self.tb = telebot.TeleBot(cccc.token)
         self.link = "" 
         self.user_id = get_user_id()
 
@@ -40,7 +40,7 @@ class LolzWorker():
         try:
             now = datetime.now()
             t = now.strftime("%H:%M:%S")
-            self.tb.send_message(config.telegram_id, "[%s] %s" % (t, message))
+            self.tb.send_message(cccc.telegram_id, "[%s] %s" % (t, message))
         except:
             logger.error("сообщение в тг не отправлено")
 
@@ -98,19 +98,19 @@ class LolzWorker():
         for tag in tags:
             tag_name = tag.text
             tag_id = tag.get("class")[2][3:]
-            if config.guarant_tag.lower() == tag_name.lower():
+            if cccc.guarant_tag.lower() == tag_name.lower():
                 self.guarant_tag = tag_id
                 i+=1
-            if config.resell_tag.lower() == tag_name.lower():
+            if cccc.resell_tag.lower() == tag_name.lower():
                 self.resell_tag = tag_id
                 i+=1
-            if config.arbitrage_tag.lower() == tag_name.lower():
+            if cccc.arbitrage_tag.lower() == tag_name.lower():
                 self.arbitrage_tag = tag_id
                 i+=1
-            if config.guard_tag.lower() == tag_name.lower():
+            if cccc.guard_tag.lower() == tag_name.lower():
                 self.guard_tag = tag_id
                 i+=1
-            if config.bot_sold_tag.lower() == tag_name.lower():
+            if cccc.bot_sold_tag.lower() == tag_name.lower():
                 self.bot_sold_tag = tag_id
                 i+=1
             
@@ -452,7 +452,7 @@ class LolzWorker():
                     self.send_message('этот аккаунт не валид. не могу его перепродать %s ' % (full_market_link))
                     return
                 for tag in tags_div:
-                    if tag.text.lower() == config.guarant_tag.lower():
+                    if tag.text.lower() == cccc.guarant_tag.lower():
                         flag = True
                 
                 if not flag:
@@ -594,7 +594,7 @@ class LolzWorker():
 
         guard = False
         for tag in tags:
-            if tag.text.lower() == config.guard_tag.lower():
+            if tag.text.lower() == cccc.guard_tag.lower():
                 guard = True
                 logger.info("Проверяю акк с гвардом на валид")
                 login = soup.find("span", id="loginData--login").text
@@ -734,7 +734,7 @@ class LolzWorker():
 
         logger.info("- - - - начинаю проверку аккаунтов на валид")
         for acc in accounts:
-            if acc[1] < int(config.guarant_time) and acc[1] != 0:
+            if acc[1] < int(cccc.guarant_time) and acc[1] != 0:
                 self.check_valid(acc[0])
             else:
                 if acc[1] == 0:
@@ -764,8 +764,8 @@ def run():
                 logger.error("хфтокен еррор через 10 сек рестар")
                 time.sleep(10)
             else:
-                logger.info("Перезапуск через %s секунд" % config.restart_script_interval)
-                time.sleep(config.restart_script_interval)
+                logger.info("Перезапуск через %s секунд" % cccc.restart_script_interval)
+                time.sleep(cccc.restart_script_interval)
         except:
             logger.error("скрипт крашнулся, жду 20 сек и перезапускаю")
             doit.send_message("crash")
@@ -777,4 +777,4 @@ def run():
             continue
 
 Thread(target=run).start()
-Thread(target=bot_run).start()
+# Thread(target=bot_run).start()

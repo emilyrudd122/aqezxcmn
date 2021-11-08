@@ -22,7 +22,7 @@ def gg():
     for req in reqs:
         amount = req.find("span", class_="value").text
         if int(amount) > min_amount:
-            bot.send_message(config.telegram_id, f'новая заяка на {amount}')
+            bot.send_message(config.telegram_id, f'новая заяка на {amount} {link_for_check}')
     
 
 while True:
