@@ -1,4 +1,5 @@
 import time
+import requests
 import traceback
 from typing import List, Tuple
 from enum import Enum
@@ -6,12 +7,12 @@ from dataclasses import dataclass
 import sqlite3
 from bs4 import BeautifulSoup
 import json
-from utils.utils import get_url, get_post
+from utils.utils import get_url, get_post, make_table_invs
 import telebot
 from utils import config
 import datetime
-import requests
 
+make_table_invs()
 
 class Announce(Enum):
     """Кого надо оповещать"""
@@ -33,14 +34,15 @@ class MarketLinks:
 class Account:
     id: int
     link: str
+
+
+@dataclass
+class MarketItemAccount(Account):
     name: str
     # сделать class Seller, который возвращает селлера по айди
     seller_id: int
     seller_name: str
     cost: int
-
-@dataclass
-class MarketItemAccount(Account):
     created_at: str
     otlega: str
     week_hours: str
@@ -61,21 +63,21 @@ class MarketChecker():
 
     def get_account(self, link: str) -> Account or None:
         """Возвращает Account или False если такого аккаунта нет(по указанной ссылке)"""
-        self.cur.execute("select * from accounts_check where link = ?", (link, ))
+        self.cur.execute("select * from invents_check where link = ?", (link, ))
         res = self.cur.fetchone()
         if not res:
             return None
 
-        return Account(res['id'], res['link'], res['name'], res['seller'],'', res['cost'])
+        return Account(res['id'], res['link'])
         
     def parse_links(self) -> List[MarketLinks] or None:
-        self.cur.execute("select * from links")
-        res = self.cur.fetchall()
-        if not res:
-            return None
+        # self.cur.execute("select * from links")
+        # res = self.cur.fetchall()
+        # if not res:
+        #     return None
         list: List[MarketLinks] = []
-        for r in res:
-            list.append(MarketLinks(r['link'], Announce(r['announce'])))
+
+        list.append(MarketLinks('https://lolz.guru/market/steam/?game[]=730&country[]=China&inv_game=730&inv_max=1&order_by=pdate_to_down   ', Announce('dan')))
 
         return list
 
@@ -127,8 +129,11 @@ class MarketChecker():
             return None
         return answer
 
-    def send_announce_telegram(self, account: MarketItemAccount, link: MarketLinks):
-        msg = f"""<b>[{datetime.datetime.now().strftime("%H:%M:%S")}]{account.name}</b>
+    def send_announce_telegram(self, account: MarketItemAccount, link: MarketLinks, inv):
+        msg = f"""[{datetime.datetime.now().strftime("%H:%M:%S")}]{account.name}
+
+<b>инвентарь - {inv['totalValueSimple']} руб.</b>
+
 {account.otlega} + {account.week_hours}
 {account.cost} руб. аккаунт от {account.seller_name}
 Ссылка - {account.link}
@@ -146,6 +151,9 @@ class MarketChecker():
         elif link.announce == Announce.HARITON:
             self.bot.send_message(1647564460, msg, parse_mode='html')
             self.bot.send_message(473485315, msg, parse_mode='html')
+        elif link.announce == Announce.DAN:
+            self.bot.send_message(config.telegram_id, msg, parse_mode='html')
+            self.bot.send_message(578827447, msg, parse_mode='html')
             
     def check_booking(self) -> bool:
         """Проверяет в бд, нужно ли бронировать аккаунты, возвращает тру если надо"""
@@ -158,8 +166,8 @@ class MarketChecker():
             return False
 
     def insert_account_db(self, account: Account):
-        sql = "insert into accounts_check(link, name, seller, cost, otlega) values (?, ?, ?, ?, 0)"
-        data = (account.link, account.name, account.seller_id, account.cost)
+        sql = "insert into invents_check(link) values (?)"
+        data = (account.link, )
         try:
             self.cur.execute(sql, data)
             self.conn.commit()
@@ -221,18 +229,28 @@ class MarketChecker():
         print('false')
         return False
 
+
+
     def new_account_job(self, account: MarketItemAccount, link: MarketLinks):
-        # Попыться забронировать аккаунт
-        # Внести акк в бд
-        # Отправить оповещение
+        # бронирование аккаунта
+        # проверка на то, был ли аккаунт забронирован
+        # внесение аккаунта в бд
+        # парс инвентаря
+        # отправка оповещения, если инвентарь больше {config.inv_price}, иначе скип и разбронирование
+        # book = self.book_account(account)
         
-        if self.check_booking():
-            book = self.book_account(account)
+        inv = self.parse_inventory(account)
+        if inv == False:
+            print(f"не получилось спарсить {account.link}")
+        else:
+            if float(inv['totalValueSimple']) > 1:
+                self.send_announce_telegram(account, link, inv)
         self.insert_account_db(account)
-        self.send_announce_telegram(account, link)
         
+
+    
+
     def start_check(self):
-        # self.conn.commit()
         self.links = self.parse_links()
         if self.xftoken == '':
             self.xftoken = self.parse_xftoken()
@@ -255,11 +273,16 @@ class MarketChecker():
             for market_item in market_items[3:]:
                 if not 'itemIgnored' in market_item['class']: #проверка на блок продавца
                     account: List[MarketItemAccount] = self.get_account_info_market_item(market_item)
+                    # print('1')
                     if self.get_account(account.link) == None:
+                        # print('2')
                         if not account.bumped and any(qq in account.created_at.lower() for qq in dd):
+                            # print('3')
                             print(account.name)
                             self.new_account_job(account, link)
-
+                            time.sleep(0.1)
+                    
+        # self.conn.commit()
         
 market = MarketChecker()
 

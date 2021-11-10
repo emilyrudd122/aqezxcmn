@@ -3,21 +3,28 @@ import requests
 import base64
 import re
 from bs4 import BeautifulSoup
+from requests.api import head
 from utils import config
 import sqlite3
 import datetime
 
 
-
+df_id = ''
 def getXenforoCookie():
-    try:
-        r = requests.get('https://lolz.guru/process-qv9ypsgmv9.js', headers={'User-Agent':'Mozilla/5.0'})
-    except:
-        return None
-    cookieArray = re.search('^var _0x\w+=(.*?);', r.text).group(1)
-    base64DfId = eval(cookieArray)[-1]
-    res = base64.b64decode(base64DfId).decode()
-    return res
+    global df_id
+    if df_id == '':
+        print('parse df')
+        try:
+            r = requests.get('https://lolz.guru/process-qv9ypsgmv9.js', headers={'User-Agent':'Mozilla/5.0'})
+        except:
+            return None
+        cookieArray = re.search('^var _0x\w+=(.*?);', r.text).group(1)
+        base64DfId = eval(cookieArray)[-1]
+        res = base64.b64decode(base64DfId).decode()
+        df_id = res
+        return res
+    else:
+        return df_id
 
 def make_coki():
     cokies = config.cokies
@@ -84,17 +91,20 @@ def display_time(seconds, granularity=2):
             result.append("{} {}".format(int(value), name))
     return ', '.join(result[:granularity])
 
-def get_post(url, data):
+def get_post(url, data, headers=None):
     """ returns page(requests object) """
 
-    s = requests.Session()
+    
     # cookies = config.cookies
     # url = "https://lolz.guru/market/16461695/"
 
-
-    page = s.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    if not headers:
+        page = requests.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=500)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=5)
+    else:
+        # headers['cookie'] = str(make_coki())
+        page = requests.post(url,headers=headers, cookies=make_coki(), data=data, timeout=5)
     return page
 
 def get_user_id():
@@ -110,6 +120,22 @@ def get_user_id():
     user_id = url_id.get("href").split("/")[2]
     
     return user_id
+
+def make_table_invs():
+    conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
+    cursor = conn.cursor()
+    table = """CREATE TABLE "invents_check" (
+            "id"	INTEGER,
+            "link"	INTEGER,
+            PRIMARY KEY("id" AUTOINCREMENT)
+        );"""
+    try:
+        qwe = cursor.execute(table)
+        conn.commit()
+        print('table created')
+    except sqlite3.OperationalError:
+        # print('table existst')
+        pass
 
 conn = sqlite3.connect('databases/market.db', check_same_thread=False)
 cursor = conn.cursor()

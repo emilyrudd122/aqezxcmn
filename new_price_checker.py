@@ -64,6 +64,7 @@ def make_coki():
 
     return cookies
 
+
 cookies = make_coki()
 # print(cookies)
 headers = {'User-Agent':'Mozilla/5.0'}
@@ -227,7 +228,7 @@ async def main():
     
     async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
         tasks = []
-        ch = 3
+        ch = 4
         ll = len(links)//ch
         l = len(links)%ch
 
@@ -249,7 +250,7 @@ async def main():
                 print(traceback.format_exc())
                 return None
             tasks = []
-            time.sleep(2)
+            time.sleep(1)
 
         if l > 0:
             l = -l
@@ -264,7 +265,7 @@ async def main():
                 print(traceback.format_exc())
                 return None
             tasks = []
-            time.sleep(2)
+            time.sleep(1)
 
 
 

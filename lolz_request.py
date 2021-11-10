@@ -8,19 +8,48 @@ from bs4 import BeautifulSoup
 from loguru import logger
 import json
 import telebot
-from utils import config
 import steam.webauth as wa
 import time
-from utils.utils import get_url, get_post, display_time, get_user_id
-from utils import db
-from bot import bot_run
+import os
+
+
 from threading import Thread
 
 logger.add("logs/file_{time}.log", rotation="5 MB")
 
 logger.info("cкрипт запущен")
 
+def first_launch():
+    asd = os.path.exists("utils/config.py")
+    if not asd:
+        cookie = input("Введите куки: ")
+        telegram_id = input("Введите ваш телеграм id:")
+        bot_token = input("Введите токен для бота:")
+        end_time = input("Введите время до конца гарантии(дефолт=4500)(в СЕКУНДАХ): ")
 
+        my_file = open("utils/config.py", "w+")
+        my_file.writelines(f"""cokies = '{cookie}'
+
+telegram_id = {int(telegram_id)} # телеграм айди кому будут приходить сообщения
+token = '{bot_token}' # токен для бота телеграм
+market_bot_token = "{bot_token}"
+guarant_time = {int(end_time)} # время до конца гарантии в секундах
+restart_script_interval = 270
+
+# названия меток для ворка
+guarant_tag = 'гарантия'
+resell_tag = 'перепродать'
+arbitrage_tag = 'написать арб'
+guard_tag = 'гвард'
+bot_sold_tag = 'перепродан'""")
+        my_file.close()
+
+first_launch()
+
+from utils.utils import get_url, get_post, display_time, get_user_id
+from utils import db
+from bot import bot_run
+from utils import config
 class LolzWorker():
 
     def __init__(self):
@@ -677,7 +706,6 @@ class LolzWorker():
     def main(self):
         # Здесь начинается парсинг аккаунтов по указанной ссылке
         asd = self.parse_xftoken()
-
         if asd == 0:
             return 'd'
         self.parse_tags_id()

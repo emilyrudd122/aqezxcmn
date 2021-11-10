@@ -24,8 +24,8 @@ def getXenforoCookie(proxy):
         cookieArray = re.search('^var _0x\w+=(.*?);', r.text).group(1)
         base64DfId = eval(cookieArray)[-1]
         res = base64.b64decode(base64DfId).decode()
-        cur.execute("insert into proxy(ip, df_id) values(?, ?)", (proxy['http'], res))
-        conn.commit()
+        # cur.execute("insert into proxy(ip, df_id) values(?, ?)", (proxy['http'], res))
+        # conn.commit()
     else:
         res = prox['df_id']
     return res
@@ -69,3 +69,11 @@ def get_url(url, proxy, remake_cookie=False):
     # print(page.cookies)
     print(f"""[{str(datetime.datetime.now().strftime("%H:%M:%S"))}] ответ от страницы получен >>>""")
     return asd
+
+def get_post(url, data):
+    """ returns page(requests object) """
+
+    page = requests.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=5)
+    return page

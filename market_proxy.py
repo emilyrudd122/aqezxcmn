@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import sqlite3
 from bs4 import BeautifulSoup
 import json
+
+from requests.api import post
 # from utils.utils import get_url
 from utils.test_utils import get_url
 import telebot
@@ -19,9 +21,9 @@ with open('utils/proxy.txt') as f:
 def take_proxy():
     global lines
     global i
-    a = random.randint(1,len(proxies)-1)
+    # a = random.randint(1,len(proxies)-1)
 
-    proxy = proxies[a].replace('\n', '')
+    proxy = proxies[0].replace('\n', '')
     prox = {
         "http": f"http://{proxy}",
         "https": f"http://{proxy}",
@@ -140,7 +142,7 @@ class MarketChecker():
 
         link = f"https://lolz.guru/market/{market_id}/balance/check?price={account.cost}&=&_xfRequestUri=/market/{market_id}/&_xfNoRedirect=1&_xfToken={self.xftoken}&_xfResponseType=json"
         # print(linkk)
-        page = get_url(link, self.proxy)
+        page = get_url(link, self.proxy, True)
         if not page:
             return None
         answer = json.loads(page.text)
@@ -164,14 +166,17 @@ class MarketChecker():
         if link.announce == Announce.ADMIN:
             self.bot.send_message(config.telegram_id, msg, parse_mode='html')
         elif link.announce == Announce.ALL:
-            self.bot.send_message(1647564460, msg, parse_mode='html')
+            self.bot.send_message(config.telegram_id, msg, parse_mode='html')
             self.bot.send_message(578827447, msg, parse_mode='html')
             self.bot.send_message(1243095585, msg, parse_mode='html')
             self.bot.send_message(1140617968, msg, parse_mode='html')
             self.bot.send_message(473485315, msg, parse_mode='html')
         elif link.announce == Announce.HARITON:
-            self.bot.send_message(1647564460, msg, parse_mode='html')
+            self.bot.send_message(config.telegram_id, msg, parse_mode='html')
             self.bot.send_message(473485315, msg, parse_mode='html')
+        elif link.announce == Announce.DAN:
+            self.bot.send_message(config.telegram_id, msg, parse_mode='html')
+            self.bot.send_message(578827447, msg, parse_mode='html')
             
     def check_booking(self) -> bool:
         """Проверяет в бд, нужно ли бронировать аккаунты, возвращает тру если надо"""
@@ -226,7 +231,7 @@ class MarketChecker():
         dd = ['назад', 'сегодня', 'вчера', 'только']
         for link in self.links:
             
-            page = get_url(link.link, self.proxy)
+            page = get_url(link.link, self.proxy, True)
             while not page:
                 print("changing cookie and xftoken")
                 page = get_url(link.link, self.proxy, remake_cookie=True)
@@ -234,9 +239,9 @@ class MarketChecker():
                 time.sleep(2)
 
             soup = BeautifulSoup(page.text, 'lxml')
-
+            # print(soup.prettify())
             market_items = soup.find_all("div", class_="marketIndexItem")
-
+            print(market_items)
             for market_item in market_items[:3]:
                 if not 'itemIgnored' in market_item['class']: #проверка на блок продавца
                     account: List[MarketItemAccount] = self.get_account_info_market_item(market_item)
@@ -249,13 +254,15 @@ class MarketChecker():
             for market_item in market_items[3:]:
                 if not 'itemIgnored' in market_item['class']: #проверка на блок продавца
                     account: List[MarketItemAccount] = self.get_account_info_market_item(market_item)
+                    # print('1')
                     if self.get_account(account.link) == None:
+                        # print('2')
                         if not account.bumped and any(qq in account.created_at.lower() for qq in dd):
+                            # print('3')
                             print(account.name)
                             self.new_account_job(account, link)
 
-        
-        
+
 market = MarketChecker()
 
 while True:

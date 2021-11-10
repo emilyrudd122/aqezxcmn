@@ -12,7 +12,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from utils.utils import get_url, get_post
 import sqlite3
-from price_checker import get_price, set_account_status
+from new_price_checker import get_price, set_account_status
 import traceback
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from utils import config
