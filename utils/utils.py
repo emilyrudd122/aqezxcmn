@@ -91,7 +91,7 @@ def display_time(seconds, granularity=2):
             result.append("{} {}".format(int(value), name))
     return ', '.join(result[:granularity])
 
-def get_post(url, data, headers=None):
+def get_post(url, data, headers=None, timeout=15):
     """ returns page(requests object) """
 
     
@@ -101,10 +101,10 @@ def get_post(url, data, headers=None):
     if not headers:
         page = requests.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=5)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=timeout)
     else:
         # headers['cookie'] = str(make_coki())
-        page = requests.post(url,headers=headers, cookies=make_coki(), data=data, timeout=5)
+        page = requests.post(url,headers=headers, cookies=make_coki(), data=data, timeout=timeout)
     return page
 
 def get_user_id():

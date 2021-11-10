@@ -77,7 +77,7 @@ class MarketChecker():
         #     return None
         list: List[MarketLinks] = []
 
-        list.append(MarketLinks('https://lolz.guru/market/steam/?game[]=730&country[]=China&inv_game=730&inv_max=1&order_by=pdate_to_down   ', Announce('dan')))
+        list.append(MarketLinks('https://lolz.guru/market/user/3308357/items', Announce('dan')))
 
         return list
 

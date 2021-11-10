@@ -239,8 +239,11 @@ class MarketChecker():
         dd = ['назад', 'сегодня', 'вчера', 'только']
         for link in self.links:
             page = get_url(link.link)
-
-            soup = BeautifulSoup(page.text, 'lxml')
+            try:
+                soup = BeautifulSoup(page.text, 'lxml')
+            except AttributeError:
+                self.bot.send_message(config.telegram_id, 'бан айпи')
+                return
             market_items = soup.find_all("div", class_="marketIndexItem")
 
             for market_item in market_items[:3]:
@@ -266,7 +269,7 @@ market = MarketChecker()
 while True:
     try:
         market.start_check()
-        # time.sleep(1)
+        time.sleep(1)
     except Exception as e:
         print(traceback.format_exc())
         print("crash, sleep 10 sec")
