@@ -140,7 +140,7 @@ async def on_message(message):
     def make_msg(info, inv=False, hide=False):
         response = f"""{info['name']}
 Инвентарь = {inv if inv else 'Инвентарь парсится...'}руб.
-{info['otlega']} - {info['chasov']} за 2 недели
+Последний актив = {info['otlega']} |||  {info['chasov']} за 2 недели
 {info['medals'] if int(info['medals'])>0 else '0'} медали
 
 {info['rank'] if not hide else ''}
