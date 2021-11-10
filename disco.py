@@ -144,7 +144,7 @@ async def on_message(message):
 {info['medals'] if int(info['medals'])>0 else '0'} медали
 
 {info['rank'] if not hide else ''}
-Цена = {info['price']} {message.content.split()[0]}
+Цена = {info['price']}р. {message.content.split()[0]}
 """
         return response
 
