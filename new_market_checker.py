@@ -139,10 +139,7 @@ class MarketChecker():
             self.bot.send_message(config.telegram_id, msg, parse_mode='html')
         elif link.announce == Announce.ALL:
             self.bot.send_message(1647564460, msg, parse_mode='html')
-            self.bot.send_message(578827447, msg, parse_mode='html')
             self.bot.send_message(1243095585, msg, parse_mode='html')
-            self.bot.send_message(1140617968, msg, parse_mode='html')
-            self.bot.send_message(473485315, msg, parse_mode='html')
         elif link.announce == Announce.HARITON:
             self.bot.send_message(1647564460, msg, parse_mode='html')
             self.bot.send_message(473485315, msg, parse_mode='html')
