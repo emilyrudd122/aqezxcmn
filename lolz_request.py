@@ -392,20 +392,26 @@ class LolzWorker():
                         logger.error('не получилось выложить акк(капча стима при проверке)')
                         return
         except KeyError:
-            if answer['_redirectStatus'] == 'ok':
-                self.send_message("выложен акккаунт %s" % (answer['_redirectTarget']))
-                logger.success(answer)
-            else:
+            try:
+                if answer['_redirectStatus'] == 'ok':
+                    self.send_message("выложен акккаунт %s" % (answer['_redirectTarget']))
+                    logger.success(answer)
+            except KeyError:
+                logger.info("ошибка при выкладке аккаунта")
                 logger.info(answer)
-        if answer['_redirectStatus'] == 'ok':
-            self.remove_tag(market_link, self.guarant_tag) 
-            time.sleep(0.3)
-            self.remove_tag(market_link, self.resell_tag) 
-            time.sleep(0.3)
-            self.remove_tag(market_link, 13) 
-            self.add_tag(market_link, self.bot_sold_tag)
-            self.parse_inventory(marketqq)
+        try:
+            if answer['_redirectStatus'] == 'ok':
+                self.remove_tag(market_link, self.guarant_tag) 
+                time.sleep(0.3)
+                self.remove_tag(market_link, self.resell_tag) 
+                time.sleep(0.3)
+                self.remove_tag(market_link, 13) 
+                self.add_tag(market_link, self.bot_sold_tag)
+                self.parse_inventory(marketqq)
 
+                logger.info(answer)
+        except KeyError:
+            logger.info("ошибка при выкладке аккаунта")
             logger.info(answer)
 
 

@@ -22,6 +22,7 @@ def getXenforoCookie():
         base64DfId = eval(cookieArray)[-1]
         res = base64.b64decode(base64DfId).decode()
         df_id = res
+        print('parsed df')
         return res
     else:
         return df_id

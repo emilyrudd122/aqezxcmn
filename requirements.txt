@@ -17,6 +17,7 @@ charset-normalizer==2.0.4
 colorama==0.4.4
 configparser==5.0.2
 crayons==0.4.0
+discord.py==1.7.3
 Eel==0.12.4
 et-xmlfile==1.1.0
 future==0.18.2

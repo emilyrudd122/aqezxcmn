@@ -52,7 +52,7 @@ class MarketChecker():
 
     def __init__(self):
         self.links = []
-        self.conn = sqlite3.connect('databases/lolz_market_bot.db')
+        self.conn = sqlite3.connect('databases/lolz_market_bot.db', check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.cur = self.conn.cursor()
         self.xftoken = ""
@@ -227,10 +227,14 @@ class MarketChecker():
             book = self.book_account(account)
         self.insert_account_db(account)
         self.send_announce_telegram(account, link)
+    
+    def parsee_links(self):
+        self.links = self.parse_links()
         
+
     def start_check(self):
         # self.conn.commit()
-        self.links = self.parse_links()
+        # self.links = self.parse_links()
         if self.xftoken == '':
             self.xftoken = self.parse_xftoken()
         dd = ['назад', 'сегодня', 'вчера', 'только']
@@ -259,14 +263,24 @@ class MarketChecker():
                         if not account.bumped and any(qq in account.created_at.lower() for qq in dd):
                             print(account.name)
                             self.new_account_job(account, link)
-
         
 market = MarketChecker()
-
+from threading import Thread
 while True:
+# for i in range(5):
     try:
+        market.parsee_links()
+
         market.start_check()
-        time.sleep(1)
+        # t1 = Thread(target=market.start_check).start()
+        time.sleep(0.5)
+        # t2 = Thread(target=market.start_check).start()
+
+        # t1.join()
+        # t2.join()
+        
+        
+        print("sleep ended")
     except Exception as e:
         print(traceback.format_exc())
         print("crash, sleep 10 sec")
