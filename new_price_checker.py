@@ -155,7 +155,7 @@ def change_price(link, new_price):
 async def check_account(session, link, ids):
     html = ""
     try:
-        async with session.get(link[0]) as resp:
+        async with session.get(link[0], verify_ssl=False) as resp:
             assert resp.status == 200
 
             html = await resp.text()
