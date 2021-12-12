@@ -778,7 +778,7 @@ class LolzWorker():
         logger.info("все аккаунты проверены")
         logger.info("начинаю получать статусы аккаунтов(валид/невалид)")
         msg = self.get_account_marks(message)
-        self.resell_accounts()
+        # self.resell_accounts()
         if msg != "":
             # self.send_message(msg)
             logger.info(msg)
