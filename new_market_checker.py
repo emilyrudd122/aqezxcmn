@@ -251,6 +251,8 @@ class MarketChecker():
                     self.bot.send_message(config.telegram_id, 'бан айпи')
                     self.err = 0
                 return
+            self.err = 0
+
             market_items = soup.find_all("div", class_="marketIndexItem")
 
             for market_item in market_items[:3]:
