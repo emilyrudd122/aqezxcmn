@@ -10,6 +10,7 @@ from utils import config
 import sqlite3
 from utils.utils import get_url
 import telebot
+import datetime
 
 def parse_xftoken():
     print("начинаю парсить xftoken")
@@ -154,6 +155,9 @@ def change_price(link, new_price):
 
 async def check_account(session, link, ids):
     html = ""
+    import random
+    qwe = random.randint(1, 5)
+    await asyncio.sleep((1/qwe))
     try:
         async with session.get(link[0], verify_ssl=False) as resp:
             assert resp.status == 200
@@ -206,7 +210,7 @@ async def check_account(session, link, ids):
             print(qwe)
             send_notification(system=True, msg='аккаунт не забронировался')
 
-    print(f"{price} - {link[0]}")
+    print(f"{datetime.datetime.now().time()} {price} - {link[0]}")
         
 
 
@@ -241,31 +245,35 @@ async def main():
             # print(list[w:q])
             for link in links[w:q]:
                 task = asyncio.create_task(check_account(session, link, ids))
+                task = asyncio.create_task(check_account(session, link, ids))
+                task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
             # print(tasks)
             try:
-                await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks, return_exceptions=True)
             except:            
                 print("creah")
                 print(traceback.format_exc())
                 return None
             tasks = []
-            time.sleep(1)
+            # time.sleep(0.1)
 
         if l > 0:
             l = -l
             for link in links[l:]:
                 task = asyncio.create_task(check_account(session, link, ids))
+                task = asyncio.create_task(check_account(session, link, ids))
+                task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
-        
             try:
-                await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks, return_exceptions=True)
+                # print("sent queries")
             except:
                 print("creah")
                 print(traceback.format_exc())
                 return None
             tasks = []
-            time.sleep(1)
+            # time.sleep(0.1)
 
 
 

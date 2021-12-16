@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import json
 from utils.utils import get_url, get_post
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils import config
 import datetime
 import requests
@@ -58,6 +59,7 @@ class MarketChecker():
         self.xftoken = ""
         # TODO: вынести токен в конфиг
         self.bot = telebot.TeleBot(token=config.market_bot_token)
+        self.err = 0
 
     def get_account(self, link: str) -> Account or None:
         """Возвращает Account или False если такого аккаунта нет(по указанной ссылке)"""
@@ -133,7 +135,7 @@ class MarketChecker():
 {account.cost} руб. аккаунт от {account.seller_name}
 Ссылка - {account.link}
         """
-        
+            
         if link.announce == Announce.ADMIN:
             print("announce admin")
             self.bot.send_message(config.telegram_id, msg, parse_mode='html')
@@ -243,7 +245,11 @@ class MarketChecker():
             try:
                 soup = BeautifulSoup(page.text, 'lxml')
             except AttributeError:
-                self.bot.send_message(config.telegram_id, 'бан айпи')
+                if self.err < 5:
+                    self.err += 1
+                else:
+                    self.bot.send_message(config.telegram_id, 'бан айпи')
+                    self.err = 0
                 return
             market_items = soup.find_all("div", class_="marketIndexItem")
 
@@ -265,20 +271,14 @@ class MarketChecker():
                             self.new_account_job(account, link)
         
 market = MarketChecker()
-from threading import Thread
+
 while True:
 # for i in range(5):
     try:
         market.parsee_links()
 
         market.start_check()
-        # t1 = Thread(target=market.start_check).start()
-        time.sleep(0.5)
-        # t2 = Thread(target=market.start_check).start()
-
-        # t1.join()
-        # t2.join()
-        
+        # time.sleep(0.5)
         
         print("sleep ended")
     except Exception as e:
