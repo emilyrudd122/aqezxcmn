@@ -261,6 +261,7 @@ async def echo(message: types.Message):
         res = add_account(spl[0], acc_page, buy_price=spl[1], sender=message)
         if res != 2:
             await message.reply("аккаунт добавлен с ценой покупки = %s(текущая цена = %s)" % (spl[1], res))
+            await bot.send_message(config.telegram_id, f"Добавлен аккаунт {spl[0]} от {message.from_user.first_name}")
         elif res == 5:
             await message.reply("Ошибка, попробуйте позже.")
         else:
@@ -271,6 +272,7 @@ async def echo(message: types.Message):
         res = add_account(spl[0], acc_page, sender=message)
         if res != 2:
             await message.reply("аккаунт добавлен без цены покупки(текущая цена = %s)" % res)
+            await bot.send_message(config.telegram_id, f"Добавлен аккаунт {spl[0]} от {message.from_user.first_name}")
         elif res == 5:
             await message.reply("ошибка, попробуй позже")
         else:

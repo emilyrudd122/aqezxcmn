@@ -155,9 +155,9 @@ def change_price(link, new_price):
 
 async def check_account(session, link, ids):
     html = ""
-    import random
-    qwe = random.randint(1, 5)
-    await asyncio.sleep((1/qwe))
+    # import random
+    # qwe = random.randint(1, 5)
+    # await asyncio.sleep((1/qwe))
     try:
         async with session.get(link[0], verify_ssl=False) as resp:
             assert resp.status == 200
@@ -245,8 +245,6 @@ async def main():
             # print(list[w:q])
             for link in links[w:q]:
                 task = asyncio.create_task(check_account(session, link, ids))
-                task = asyncio.create_task(check_account(session, link, ids))
-                task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
             # print(tasks)
             try:
@@ -256,13 +254,11 @@ async def main():
                 print(traceback.format_exc())
                 return None
             tasks = []
-            # time.sleep(0.1)
+            time.sleep(0.1)
 
         if l > 0:
             l = -l
             for link in links[l:]:
-                task = asyncio.create_task(check_account(session, link, ids))
-                task = asyncio.create_task(check_account(session, link, ids))
                 task = asyncio.create_task(check_account(session, link, ids))
                 tasks.append(task)
             try:
@@ -273,7 +269,7 @@ async def main():
                 print(traceback.format_exc())
                 return None
             tasks = []
-            # time.sleep(0.1)
+            time.sleep(0.1)
 
 
 

@@ -140,11 +140,13 @@ class MarketChecker():
             print("announce admin")
             self.bot.send_message(config.telegram_id, msg, parse_mode='html')
         elif link.announce == Announce.ALL:
-            self.bot.send_message(1647564460, msg, parse_mode='html')
-            self.bot.send_message(1243095585, msg, parse_mode='html')
-        elif link.announce == Announce.HARITON:
-            self.bot.send_message(1647564460, msg, parse_mode='html')
-            self.bot.send_message(473485315, msg, parse_mode='html')
+            users = self.cur.execute("select * from users where approve = 1").fetchall()
+            ids = []
+            for user in users:
+                ids.append(user['telegram_id'])
+            for id in ids:
+                self.bot.send_message(id, msg, parse_mode='html')
+            
             
     def check_booking(self) -> bool:
         """Проверяет в бд, нужно ли бронировать аккаунты, возвращает тру если надо"""
