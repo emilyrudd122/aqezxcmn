@@ -44,7 +44,17 @@ def send_notification(ids='', link='', first_price='', new_price='', system=Fals
         return
     try:
         for id in ids:
-            bot.send_message(id, "%s цена изменена с %s на %s %s" % (link, first_price, new_price, tt))
+            try:
+                bot.send_message(id, "%s цена изменена с %s на %s %s" % (link, first_price, new_price, tt))
+            except:
+                try:
+                    bot.send_message(id, "%s цена изменена с %s на %s %s" % (link, first_price, new_price, tt))
+                except:
+                    try:
+                        bot.send_message(id, "%s цена изменена с %s на %s %s" % (link, first_price, new_price, tt))
+                    except:
+                        print("ошибка при отправке уведомления об изменении цены")
+
     except Exception as e:
         print(traceback.format_exc())
         print("ошибка при отправке оповещения в телеграм")

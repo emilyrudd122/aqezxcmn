@@ -124,6 +124,7 @@ dmypy.json
 .pyre/
 
 databases/market.db
+databases/lolz_market_bot.db
 databases/test.db
 migrations/
 

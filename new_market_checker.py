@@ -135,17 +135,42 @@ class MarketChecker():
 {account.cost} руб. аккаунт от {account.seller_name}
 Ссылка - {account.link}
         """
+
+        keyboard = InlineKeyboardMarkup()
+        callback_button = InlineKeyboardButton(text="Прочек", callback_data=f"link_{account.link}")
+        keyboard.add(callback_button)
+
             
         if link.announce == Announce.ADMIN:
             print("announce admin")
-            self.bot.send_message(config.telegram_id, msg, parse_mode='html')
+            try:
+                self.bot.send_message(config.telegram_id, msg, parse_mode='html')
+            except:
+                try:
+                    self.bot.send_message(config.telegram_id, msg, parse_mode='html')
+                except:
+                    try:
+                        self.bot.send_message(config.telegram_id, msg, parse_mode='html')
+                    except:
+                        print("\n\n\n\n\n\nошибка при отправке оповещения в телеграм\n\n\n\n\n\n")
+            
         elif link.announce == Announce.ALL:
-            users = self.cur.execute("select * from users where approve = 1").fetchall()
+            users = self.cur.execute("select * from users where approve = 1 and notify = 1").fetchall()
             ids = []
             for user in users:
                 ids.append(user['telegram_id'])
             for id in ids:
-                self.bot.send_message(id, msg, parse_mode='html')
+                try:
+                    self.bot.send_message(id, msg, parse_mode='html', reply_markup=keyboard)
+                except:
+                    try:
+                        self.bot.send_message(id, msg, parse_mode='html', reply_markup=keyboard)
+                    except:
+                        try:
+                            self.bot.send_message(id, msg, parse_mode='html', reply_markup=keyboard)
+                        except:
+                            print("\n\n\n\n\n\nошибка при отправке оповещения в телеграм\n\n\n\n\n\n")
+                
             
             
     def check_booking(self) -> bool:
@@ -168,60 +193,6 @@ class MarketChecker():
         except sqlite3.Error as error:
             print("Failed to insert Python variable into sqlite table", error)
 
-    def parse_inventory(self, account: MarketItemAccount):
-        market_id = account.link.split('/')[-2]
-        post_url = "https://lolz.guru/market/steam-value"
-        app_id = "730"
-        headers = {
-            "accept": "application/json, text/javascript, */*; q=0.01",
-            "accept-encoding": "gzip, deflate, br",
-            "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-            "content-length": "210",
-            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "origin": "https://lolz.guru",
-            "referer": "https://lolz.guru/market/steam-value",
-            "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "macOS",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
-            "x-ajax-referer": "https://lolz.guru/market/steam-value",
-            "x-requested-with": "XMLHttpRequest",
-        }
-
-        data = {
-            "link": account.link,
-            "app_id": app_id,
-            "_xfRequestUri": f"/market/steam-value?link=https%3A%2F%2Flolz.guru%2Fmarket%2F{market_id}%2F&app_id={app_id}",
-            "_xfNoRedirect": 1,
-            "_xfToken": self.xftoken,
-            "_xfResponseType": "json"
-        }
-        parsed=False
-        print("Начинаю парсить инв")
-        for i in range(10):
-            print(i)
-            if not parsed:
-                try:
-                    asd = get_post(post_url, data, headers)
-                    qwe = json.loads(asd.text)
-                except requests.exceptions.ReadTimeout:
-                    continue
-                if not 'error' in qwe:
-                    parsed=True
-                    print(f'parsed = true {qwe["totalValueSimple"]}')
-                    return qwe
-                else:
-                    print(qwe)
-                    continue
-            else:
-                print('break')
-                break
-        print('false')
-        return False
-
     def new_account_job(self, account: MarketItemAccount, link: MarketLinks):
         # Попыться забронировать аккаунт
         # Внести акк в бд
@@ -231,14 +202,11 @@ class MarketChecker():
             book = self.book_account(account)
         self.insert_account_db(account)
         self.send_announce_telegram(account, link)
-    
-    def parsee_links(self):
-        self.links = self.parse_links()
         
 
     def start_check(self):
         # self.conn.commit()
-        # self.links = self.parse_links()
+        self.links = self.parse_links()
         if self.xftoken == '':
             self.xftoken = self.parse_xftoken()
         dd = ['назад', 'сегодня', 'вчера', 'только']
@@ -279,8 +247,6 @@ market = MarketChecker()
 while True:
 # for i in range(5):
     try:
-        market.parsee_links()
-
         market.start_check()
         # time.sleep(0.5)
         

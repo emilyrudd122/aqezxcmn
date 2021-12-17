@@ -142,6 +142,22 @@ async def check_user_and_answ(message):
         await message.reply("Вы не зарегистрированы или ваша заявка пока что не одобрена, напишите /start")
         return False
 
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('link_'))
+async def process_callback_link(callback_query: types.CallbackQuery):
+    data = callback_query.data
+    link = data.split('_')[1]
+    acc_page = BeautifulSoup(get_url(link).text, 'html.parser')
+    res = add_account(link, acc_page, buy_price=0, sender=callback_query)
+    if res != 2:
+        await bot.send_message(callback_query.from_user.id, "аккаунт добавлен с ценой покупки = %s(текущая цена = %s)" % (0, res))
+        await bot.send_message(config.telegram_id, f"Добавлен аккаунт {link} от {callback_query.from_user.first_name}")
+    elif res == 5:
+        await bot.send_message(callback_query.from_user.id, "Ошибка, попробуйте позже.")
+    else:
+        await bot.send_message(callback_query.from_user.id, "Аккаунт уже чекается")
+
+
 @dp.message_handler(commands=['new_users'])
 async def new_users(message: types.Message):
     if not check_user(message.from_user.id) == 2:
@@ -155,6 +171,8 @@ async def new_users(message: types.Message):
             await bot.send_message(message.from_user.id, msg)
     else:
         await bot.send_message(message.from_user.id, "Нет новых заявок")
+
+
 @dp.message_handler(commands=['status'])
 async def change_status(message: types.Message):
     if not check_user(message.from_user.id) == 2:
@@ -193,11 +211,14 @@ async def send_welcome(message: types.Message):
     if check_user_exists(message.from_user.id) == True:
         if check_user(message.from_user.id) == 2:
             keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            buttons = ["/list", "/new_users"]
+            buttons = ["/list", "/new_users", "/book"]
             keyboard.add(*buttons)
             await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowered by zxxxcqq", reply_markup=keyboard)
         else:
-            await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowered by zxxxcqq")
+            keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            buttons = ["/list", "/notify", "/help"]
+            keyboard.add(*buttons)
+            await message.reply("Привет я бот для маркета, список функций доступен по команде /help\n\nPowered by zxxxcqq", reply_markup=keyboard)
 
     else:
         add_user(message.from_user.id, message.from_user.first_name)
@@ -220,12 +241,28 @@ async def book_market(message: types.Message):
         cur.execute("update settings set book_market = 1 where id = 1")
         conn.commit()
 
+@dp.message_handler(commands=['notify'])
+async def change_notify(message: types.Message):
+    if not await check_user_and_answ(message):
+        return
+    cur.execute(f"select * from users where telegram_id = {message.from_user.id}")
+    asd = cur.fetchone()
+
+    if asd['notify'] == 1:
+        await message.reply("Оповещения о новых аккаунтах выключены")
+        cur.execute(f"update users set notify = 0 where telegram_id = {message.from_user.id}")
+        conn.commit()
+    elif asd['notify'] == 0:
+        await message.reply("Оповещения о новых аккаунтах включены")
+        cur.execute(f"update users set notify = 1 where telegram_id = {message.from_user.id}")
+        conn.commit()
+
 
 @dp.message_handler(commands=["help"])
 async def help(message: types.Message):
     if not await check_user_and_answ(message):
         return
-    help = "Помощь:\nДля добавления аккаунта нужно просто отправить ссылку на аккаунт боту\n\nСписок доступных команд:\n/list - выводит список акков на проверке\n /help - помощь"
+    help = "Помощь:\nДля добавления аккаунта нужно просто отправить ссылку на аккаунт боту\n\nСписок доступных команд:\n/list - выводит список акков на проверке\n/help - помощь\n/notify -  вкл/выкл оповещения о новых аккаунтах"
     if check_user(message.from_user.id) == 2:
         help += "\n\nAdmin commands:\n/newusers показывается неапрувленных юзеров\n/approve [user_id] аппрувит юзера"
     
