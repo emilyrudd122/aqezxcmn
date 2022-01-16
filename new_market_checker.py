@@ -155,7 +155,7 @@ class MarketChecker():
                         print("\n\n\n\n\n\nошибка при отправке оповещения в телеграм\n\n\n\n\n\n")
             
         elif link.announce == Announce.ALL:
-            users = self.cur.execute("select * from users where approve = 1 and notify = 1").fetchall()
+            users = self.cur.execute("select * from users where approve = 1 and notify = 1ц").fetchall()
             ids = []
             for user in users:
                 ids.append(user['telegram_id'])

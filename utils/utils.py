@@ -7,6 +7,7 @@ from requests.api import head
 from utils import config
 import sqlite3
 import datetime
+import dfuid
 
 
 df_id = ''
@@ -31,14 +32,22 @@ def make_coki():
     cokies = config.cokies
     asd = cokies.split(';')
     ckies = {}
-    xf = getXenforoCookie()
-    if xf == None:
-        print("Ошибка при парсе куков")
-        return None
+    # xf = getXenforoCookie()
+    # if xf == None:
+    #     print("Ошибка при парсе куков")
+    #     return None
     for qwe in asd:
         qq = qwe.split("=")
-        if qq[0].split()[0] == 'df_id':
-            ckies[qq[0].split()[0]] = xf
+        if qq[0].split()[0] == 'df_uid':
+
+            # ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+            df_id_fetcher = dfuid.DfUid("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36")
+            df_uid = df_id_fetcher.fetch()
+            print(df_uid)
+            if df_uid == 0:
+                print("error")
+                return 0
+            ckies[qq[0].split()[0]] = df_uid
             continue
         ckies[qq[0].split()[0]] = qq[1]
 
@@ -114,9 +123,11 @@ def get_user_id():
     if not main_page:
         return None
     soup = BeautifulSoup(main_page.text, 'html.parser')
-    # print(soup)
+    
     asd = soup.find(id="AccountMenu")
+    
     asdd =  asd.find_all("a")
+    
     url_id = asdd[3]
     user_id = url_id.get("href").split("/")[2]
     

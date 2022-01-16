@@ -187,8 +187,6 @@ async def check_account(session, link, ids):
             html = await resp.text()
     except Exception as e:
         print(traceback.format_exc())
-        af = traceback.format_exc()
-        bot.send_message(config.telegram_id, f"{af}")
         return None
 
     soup = BeautifulSoup(html, 'html.parser')
@@ -288,7 +286,7 @@ async def main(loop):
                 for link in links:
 
                     asyncio.ensure_future(check_account(session, link, ids))
-                    await asyncio.sleep(0.22)
+                    await asyncio.sleep(0.3)
                         
                 await asyncio.sleep(0.4)
 
