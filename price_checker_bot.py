@@ -87,8 +87,7 @@ def add_account(link, soup, buy_price=0, sender:types.Message=''):
     for i in range(10):
         first_price = get_price(soup)
         if not first_price:
-            time.sleep(2)
-            continue
+            first_price = 1
         got = True
         break
     
@@ -197,7 +196,7 @@ async def change_status(message: types.Message):
 async def send_list(message: types.Message):
     if not await check_user_and_answ(message):
         return
-    cur.execute("select * from accounts where status=0")
+    cur.execute("select * from accounts where status=0 or status=5")
     res = cur.fetchall()
     txt = ""
     for r in res:

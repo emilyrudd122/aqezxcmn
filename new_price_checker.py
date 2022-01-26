@@ -175,7 +175,10 @@ def change_price(link, new_price):
     except sqlite3.Error as error:
         print("Failed to insert Python variable into sqlite table", error)
 
+mistakes = 0
+
 async def check_account(session, link, ids):
+    global mistakes
     html = ""
     # import random
     # qwe = random.randint(1, 5)
@@ -183,15 +186,19 @@ async def check_account(session, link, ids):
     try:
         async with session.get(link[0], verify_ssl=False) as resp:
             assert resp.status == 200
-
             html = await resp.text()
+
     except Exception as e:
         print(traceback.format_exc())
         af = traceback.format_exc()
-        bot.send_message(config.telegram_id, f"{af}")
+        if mistakes > 10:
+            bot.send_message(config.telegram_id, f"{af}")
+            mistakes = 0
+        mistakes += 1
+        await asyncio.sleep(0.3)
         return None
 
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, 'lxml')
     
     if not check_del(soup, link[0]):
         return
@@ -288,9 +295,9 @@ async def main(loop):
                 for link in links:
 
                     asyncio.ensure_future(check_account(session, link, ids))
-                    await asyncio.sleep(0.22)
+                    await asyncio.sleep(0.5)
                         
-                await asyncio.sleep(0.4)
+                # await asyncio.sleep(0.4)
 
 
 

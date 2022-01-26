@@ -8,7 +8,7 @@ from utils import config
 import sqlite3
 import datetime
 import dfuid
-
+coki = ""
 
 df_id = ''
 def getXenforoCookie():
@@ -55,7 +55,10 @@ def make_coki():
 
     return cookies
 
+
+
 def get_url(url):
+    global coki
     """ returns page(requests object) """
     print(f"""{str(datetime.datetime.now().strftime("%H:%M:%S"))} отправил запрос {url}""")
     try:
@@ -64,7 +67,8 @@ def get_url(url):
         # url = "https://lolz.guru/market/16461695/"
 
         # print(cookies)
-        coki = make_coki()
+        if coki == "":
+            coki = make_coki()
         url = url.replace(' ', '')
         
         if coki == None:
@@ -104,14 +108,16 @@ def display_time(seconds, granularity=2):
 def get_post(url, data, headers=None, timeout=15):
     """ returns page(requests object) """
 
-    
+    global coki
     # cookies = config.cookies
     # url = "https://lolz.guru/market/16461695/"
 
     if not headers:
+        if coki == "":
+            coki = make_coki()
         page = requests.post(url,headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=make_coki(), data=data, timeout=timeout)
+                                        "Chrome/86.0.4240.75 Safari/537.36"}, cookies=coki, data=data, timeout=timeout)
     else:
         # headers['cookie'] = str(make_coki())
         page = requests.post(url,headers=headers, cookies=make_coki(), data=data, timeout=timeout)

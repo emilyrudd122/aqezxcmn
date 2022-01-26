@@ -11,7 +11,7 @@ import telebot
 import steam.webauth as wa
 import time
 import os
-
+import requests
 
 from threading import Thread
 
@@ -153,7 +153,11 @@ class LolzWorker():
     def get_time_till_guarantee(self, market_item):
 
         account_link = market_item.find("a", class_="marketIndexItem--Title").get("href")
-        soupch = BeautifulSoup(get_url("https://lolz.guru/"+account_link).text, 'html.parser')
+        try:
+            soupch = BeautifulSoup(get_url("https://lolz.guru/"+account_link).text, 'html.parser')
+        except AttributeError:
+            print(market_item)
+            return
 
 
         # print(market_item.find("a", class_="marketIndexItem--Title").text)
@@ -163,7 +167,7 @@ class LolzWorker():
 
             # asd = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")
             # print(len(asd))
-            vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find_all("abbr", class_="DateTime")[-1].get("data-time")
+            vremya_pokupki_accounta = soupch.find("div", class_="market--titleBar--info").find("span", class_="published_date").get("data-value")
         except AttributeError:
             print("не могу спарсить время до конца гарантии")
             return 0
@@ -357,7 +361,12 @@ class LolzWorker():
         }
 
         second_link = "https://lolz.guru/market/%d/goods/check" % int(marketqq)
-        asd = get_post(second_link, data)
+        try:
+            asd = get_post(second_link, data)
+        except requests.exceptions.ReadTimeout:
+            logger.error("timeout при реселле, иду дальше")
+            return
+
         answer = json.loads(asd.text)
         # logger.info(answer)
 
@@ -399,23 +408,69 @@ class LolzWorker():
             except KeyError:
                 logger.info("ошибка при выкладке аккаунта")
                 logger.info(answer)
+
+                if 'error' in answer:
+                    if 'Данный аккаунт уже продается на маркете' in answer['error'][0]:
+                        self.remove_tag(market_link, self.guarant_tag) 
+                        time.sleep(0.3)
+                        self.remove_tag(market_link, self.resell_tag)
+                        time.sleep(0.3)
+                        self.remove_tag(market_link, 13) 
+                        time.sleep(0.3)
+                        self.add_tag(market_link, self.bot_sold_tag)
+                        time.sleep(0.3)
+                        self.parse_inventory(marketqq)
+                        time.sleep(0.3)
+
+                        logger.info(answer)
+
+                        self.send_message(f"Аккаунт уже должен быть на маркете {market_link}")
+
         try:
             if answer['_redirectStatus'] == 'ok':
                 self.remove_tag(market_link, self.guarant_tag) 
                 time.sleep(0.3)
-                self.remove_tag(market_link, self.resell_tag) 
+                self.remove_tag(market_link, self.resell_tag)
                 time.sleep(0.3)
                 self.remove_tag(market_link, 13) 
+                time.sleep(0.3)
                 self.add_tag(market_link, self.bot_sold_tag)
+                time.sleep(0.3)
                 self.parse_inventory(marketqq)
+                time.sleep(0.3)
 
                 logger.info(answer)
         except KeyError:
             logger.info("ошибка при выкладке аккаунта")
-            logger.info(answer)
+            # logger.info(answer)
 
+            if 'error' in answer:
+                if answer['error'][0] == 'Неверный логин или пароль у данного аккаунта.':
+                    logger.info(answer)
+                    self.send_message(f"Аккаунт невалид после проверки гарантии, не могу его перепродать {market_link}, убран resell_tag")
+                    self.remove_tag(market_link, self.resell_tag)
+                    return
+                elif 'Данный аккаунт уже продается на маркете' in answer['error'][0]:
+                    self.remove_tag(market_link, self.guarant_tag) 
+                    time.sleep(0.3)
+                    self.remove_tag(market_link, self.resell_tag)
+                    time.sleep(0.3)
+                    self.remove_tag(market_link, 13) 
+                    time.sleep(0.3)
+                    self.add_tag(market_link, self.bot_sold_tag)
+                    time.sleep(0.3)
+                    self.parse_inventory(marketqq)
+                    time.sleep(0.3)
 
-            new_acc_link = answer['_redirectTarget']
+                    logger.info(answer)
+
+                    self.send_message(f"Аккаунт уже должен быть на маркете {market_link}")
+                else:
+                    logger.info(answer)
+            else:
+                logger.info(answer)
+
+            # new_acc_link = answer['_redirectTarget']
 
         else:
             logger.error("аккаунт не выложен %s " % (market_link))
@@ -492,6 +547,8 @@ class LolzWorker():
                 
                 if not flag:
                     accs_for_resell.append(full_market_link)
+            
+            time.sleep(1)
         
         for acc in accs_for_resell:
             # asd = self.check_valid(acc)
@@ -502,6 +559,8 @@ class LolzWorker():
             
             market_id = acc.split('/')[-2]
             self.resell_account(market_id, 'resell by bot', '9999')
+
+            time.sleep(3)
         
 
 
@@ -598,6 +657,8 @@ class LolzWorker():
                     self.remove_tag(full_market_link, self.guarant_tag)
                     logger.info("На аккаунте %s убрана метка гарантии(она закончилась)" % full_market_link)
                     self.send_message("Закончилась гарантия на %s, метка убрана" % full_market_link)
+                
+                time.sleep(2)
         
         if len(nevalid_accs) == 1:
             self.make_arb_account(nevalid_accs[0])
@@ -747,6 +808,7 @@ class LolzWorker():
                     accounts.append((full_market_link, 0))
                 else:
                     accounts.append((full_market_link, int(ostalos_vremeni_dokonca)))
+                time.sleep(2)
 
             logger.info("аккаунты спаршены")
 
@@ -778,7 +840,7 @@ class LolzWorker():
         logger.info("все аккаунты проверены")
         logger.info("начинаю получать статусы аккаунтов(валид/невалид)")
         msg = self.get_account_marks(message)
-        # self.resell_accounts()
+        self.resell_accounts()
         if msg != "":
             # self.send_message(msg)
             logger.info(msg)
@@ -811,4 +873,4 @@ def run():
             continue
 
 Thread(target=run).start()
-Thread(target=bot_run).start()
+# Thread(target=bot_run).start()
