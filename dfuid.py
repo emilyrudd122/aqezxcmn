@@ -54,7 +54,7 @@ class DfUid:
     
     def fetch(self):
         try:
-            raw = self.session.get('https://lolz.guru/market').text
+            raw = self.session.get('https://lolz.guru/').text
         except asyncio.exceptions.TimeoutError:
             print("timeout error")
             # await asyncio.sleep(4)
