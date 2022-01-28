@@ -386,7 +386,12 @@ class LolzWorker():
                     flag = True
                     i=0
                     while flag and i<=7:
-                        asd = get_post(second_link, data)
+                        try:
+                            asd = get_post(second_link, data)
+                        except requests.exceptions.ReadTimeout:
+                            logger.error("timeout при выкладке аккаунта")
+                            return
+                            
                         answer = json.loads(asd.text)
                         if answer['error'][0] != 'steam_captcha':
                             if answer['_redirectStatus'] == 'ok':
@@ -785,7 +790,8 @@ class LolzWorker():
             last_page = int(soup.find('div', class_="PageNav").get("data-last"))
         except AttributeError:
             last_page = 1
-
+        self.resell_accounts()
+        return
         accounts = []
 
         message = ""
@@ -840,7 +846,7 @@ class LolzWorker():
         logger.info("все аккаунты проверены")
         logger.info("начинаю получать статусы аккаунтов(валид/невалид)")
         msg = self.get_account_marks(message)
-        self.resell_accounts()
+        
         if msg != "":
             # self.send_message(msg)
             logger.info(msg)
