@@ -38,17 +38,17 @@ def make_coki():
     #     return None
     for qwe in asd:
         qq = qwe.split("=")
-            if qq[0].split()[0] == 'df_uid':
+        if qq[0].split()[0] == 'df_uid':
 
-                # ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
-                df_id_fetcher = dfuid.DfUid("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36")
-                df_uid = df_id_fetcher.fetch()
-                print(df_uid)
-                if df_uid == 0:
-                    print("error")
-                    return 0
-                ckies[qq[0].split()[0]] = df_uid
-                continue
+            # ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+            df_id_fetcher = dfuid.DfUid("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36")
+            df_uid = df_id_fetcher.fetch()
+            print(df_uid)
+            if df_uid == 0:
+                print("error")
+                return 0
+            ckies[qq[0].split()[0]] = df_uid
+            continue
         ckies[qq[0].split()[0]] = qq[1]
 
     cookies = ckies
